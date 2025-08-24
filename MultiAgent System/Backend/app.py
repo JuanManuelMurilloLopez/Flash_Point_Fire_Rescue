@@ -4,5 +4,6 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-  dictionary = {"name": "Santiago", "last_name": "Alducin"}
+  dictionary = {"name": "Santiago", "lastName": "Alducin"}
+  print(dictionary)
   return dictionary
