@@ -81,6 +81,12 @@ class FireRescueModel(Model):
         if not agents:
             fire = Fire(self, [diceX, diceY], state = "smoke")
             self.grid.place_agent(fire, [diceX, diceY])
+            neighbors = self.grid.get_neighborhood([diceX, diceY], moore=False, include_center=False)
+            # Si colinda con fuego, encender el humo
+            for agent in neighbors:
+                if isinstance(agent, Fire):
+                    fire.fire()
+                    break
             self.schedule.add(fire)
         else:
             # Cambiar el humo a fuego y verificar explosiones
@@ -92,8 +98,24 @@ class FireRescueModel(Model):
                         self.explosion([diceX, diceY])
 
     # TODO: Añadir lógica de las explosiones
-    def explosion(self, pos):
-        pass
+    def explosion(self, position):
+        self.handleExplosion([-1, 0], position)
+        self.handleExplosion([1, 0], position)
+        self.handleExplosion([0, 1], position)
+        self.handleExplosion([0, -1], position)
+    
+    # Mover el estado de explosión en una dirección hasta encender una casilla 
+    # o llegar al muro
+    def handleExplosion(self, direction, position):
+                
+        # TODO: Verify if agent is Player or Fire
+        fire = Fire(self, position, state = "fire")
+        self.grid.place_agent(fire, position)
+        self.schedule.add(fire)
+        return 
+        
+        newPosition = position + direction
+        self.handleExplosion(direction, newPosition)
 
     # Cuando un firefighter está en knockout, moverlo a la posición de la ambulancia
     def moveToAmbulance(self, firefighter):
