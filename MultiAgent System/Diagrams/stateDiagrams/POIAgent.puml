@@ -1,0 +1,11 @@
+@startuml POIAgent states diagram
+
+left to right direction
+
+[*] --> Trapped
+Trapped --> Revealed : reveal()
+Revealed --> Rescued : rescue()
+Revealed --> Lost : lose()
+Rescued --> [*]
+Lost --> [*]
+@enduml
