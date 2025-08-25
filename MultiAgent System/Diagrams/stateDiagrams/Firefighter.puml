@@ -1,0 +1,10 @@
+@startuml Firegither states diagram
+
+left to right direction
+
+[*] --> Active
+Active --> KnockedDown : fire/explosion
+KnockedDown --> Active: model.moveToAmbulance()
+Active --> CarryingVictim : saveVictim()
+CarryingVictim --> Active : leaveVictim
+@enduml

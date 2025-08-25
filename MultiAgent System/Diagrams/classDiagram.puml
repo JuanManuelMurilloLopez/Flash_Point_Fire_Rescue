@@ -1,0 +1,102 @@
+@startuml Diagrama de clases Flash Point Fire rescue
+
+left to right direction
+
+class Cell {
+  - pos
+  - poi
+  - fire
+  - isAccessPoint
+  - walls : dict
+  - doors : dict
+}
+
+class Door {
+  - cell1
+  - cell2
+  - state : "closed" / "open" / "destroyed"
+  + open()
+  + close()
+  + destroy()
+}
+
+class Fire {
+  - pos
+  - state : "smoke" / "fire"
+  + fire()
+  + extinguish()
+  + smoke()
+}
+
+class Firefighter {
+  - pos
+  - actionPoints
+  - carryingVictim
+  - knockedDown
+  + step()
+  + move()
+  + checkPOI()
+  + checkFire()
+  + openCloseDoor()
+  + extinguishFire()
+  + saveVictim()
+  + chopWall()
+}
+
+class FireRescueModel {
+  - width
+  - height
+  - grid
+  - schedule
+  - datacollector
+  - victimsRescued
+  - victimsLost
+  - damageTokens
+  - board
+  - ambulancePos
+  - POIs
+  - fires
+  - firefighters
+  + advanceFire()
+  + explosion()
+  + moveToAmbulance()
+  + bfs()
+  + getNeighbors()
+  + step()
+  + victory()
+  + defeat()
+  + buildingCollapse()
+  + replendishPOI()
+}
+
+class POIAgent {
+  - pos
+  - rescued
+  - revealed
+  - lost
+  - victim
+  + reveal()
+  + rescue()
+  + lose()
+}
+
+class Wall {
+  - damage
+  + addDamage()
+  + isDestroyed()
+}
+
+' Relaciones
+FireRescueModel "1" *-- "*" Firefighter
+FireRescueModel "1" *-- "*" Fire
+FireRescueModel "1" *-- "*" POIAgent
+FireRescueModel "1" *-- "*" Cell
+
+Cell "1" o-- "*" Wall
+Cell "1" o-- "*" Door
+Cell "1" o-- "0..1" Fire
+Cell "1" o-- "0..1" POIAgent
+
+Firefighter "1" --> "1" Cell
+Door "2" --> "1" Cell
+@enduml

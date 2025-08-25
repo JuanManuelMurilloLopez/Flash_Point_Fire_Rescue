@@ -1,0 +1,9 @@
+@startuml Wall states diagram
+
+left to right direction
+
+[*] --> Healthy
+Healthy --> Damaged : addDamage()
+Damaged --> Destroyed : addDamage()
+Destroyed --> [*]
+@enduml

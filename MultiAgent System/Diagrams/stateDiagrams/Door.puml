@@ -1,0 +1,11 @@
+@startuml Door states diagram
+
+left to right direction
+
+[*] --> Closed
+Closed --> Open : open()
+Open --> Closed : close()
+Closed --> Destroyed : destroy()
+Open --> Destroyed : destroy()
+Destroyed --> [*]
+@enduml

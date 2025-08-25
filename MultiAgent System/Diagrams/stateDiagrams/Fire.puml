@@ -1,0 +1,12 @@
+@startuml Fire states diagram
+
+left to right direction
+
+[*] --> Smoke
+
+Smoke --> Fire : spread
+Smoke --> Extinguished : extinguish
+Fire --> Smoke : flipFire
+Fire --> Extinguished : extinguish
+Extinguished --> [*]
+@enduml
