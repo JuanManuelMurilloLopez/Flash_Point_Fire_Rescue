@@ -5,17 +5,15 @@ using System.Collections;
 
 public static class APIHelper
 {
-    public static Player GetPlayer()
+    public static Response GetPlayer(int number)
     {
-        HttpWebRequest request = (HttpWebRequest) WebRequest.Create("http://localhost:5000");
+        HttpWebRequest request = (HttpWebRequest) WebRequest.Create($"http://localhost:5000/step/{number}");
         HttpWebResponse response = (HttpWebResponse) request.GetResponse();
 
         StreamReader reader = new StreamReader(response.GetResponseStream());
 
         string json = reader.ReadToEnd();
-
-        Debug.Log("JSON: " + json);
-
-        return JsonUtility.FromJson<Player>(json);
+        
+        return JsonUtility.FromJson<Response>(json);
     }
 }
