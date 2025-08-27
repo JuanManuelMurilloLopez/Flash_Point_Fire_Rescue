@@ -1,4 +1,4 @@
-usign UnityEngine;
+using UnityEngine;
 
 public class FireController : MonoBehaviour
 {
@@ -18,15 +18,15 @@ public class FireController : MonoBehaviour
     }
   }
 
-  private void CreateSmoke(Vector3 position)
+  private static void CreateSmoke(Vector2 position)
   {
 
   }
-  private void CreateFire(Vector3 position)
+  private static void CreateFire(Vector2 position)
   {
 
   }
-  private void CreateExplosion(Vector3 position)
+  private static void CreateExplosion(Vector2 position)
   {
 
   }
