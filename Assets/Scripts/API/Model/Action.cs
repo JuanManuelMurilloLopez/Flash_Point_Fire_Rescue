@@ -4,5 +4,5 @@ using UnityEngine;
 public class Action
 {
   public string action;
-  public Position position;
+  public Vector2 data;
 }
