@@ -20,7 +20,12 @@ dict = {
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
-        ]
+        ],
+        "fires": [
+            {"state": "smoke", "position": {"x": 10, "z": 10}},
+            {"state": "fire", "position": {"x": 14, "z": 10}},
+            {"state": "explosion", "position": {"x": 14, "z": 10}},
+        ],
     },
     2: {
         "players": [

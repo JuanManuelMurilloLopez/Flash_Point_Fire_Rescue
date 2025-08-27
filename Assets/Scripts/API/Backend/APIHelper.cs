@@ -5,7 +5,7 @@ using System.Collections;
 
 public static class APIHelper
 {
-    public static Response GetPlayerMovement(int number)
+    public static Response GetStep(int number)
     {
         HttpWebRequest request = (HttpWebRequest) WebRequest.Create($"http://localhost:5000/step/{number}");
         HttpWebResponse response = (HttpWebResponse) request.GetResponse();

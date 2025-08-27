@@ -8,10 +8,14 @@ public class PythonServer : MonoBehaviour
     public GameObject[] players;
 
     public void GetServerStep(int number) {
-        Response response = APIHelper.GetPlayerMovement(number);
+        Response response = APIHelper.GetStep(number);
         foreach(Player player in response.players)
         {
             players[player.id].GetComponent<Movement>().HandleAction(player);
+        }
+        foreach(Fire fire in response.fires)
+        {
+            FireController.HandleFire(fire);
         }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created

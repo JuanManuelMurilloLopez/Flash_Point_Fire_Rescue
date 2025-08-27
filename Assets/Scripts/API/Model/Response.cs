@@ -4,4 +4,5 @@ using UnityEngine;
 public class Response
 {
   public Player[] players;
+  public Fire[] fires;
 }

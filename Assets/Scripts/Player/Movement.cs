@@ -16,8 +16,8 @@ public class Movement : MonoBehaviour
         }
     }
 
-    private void Move(Vector2 newPos) 
+    private void Move(Vector3 newPos) 
     {
-        transform.position = new Vector3(newPos.x, transform.position.y, newPos.x);
+        transform.position = new Vector3(newPos.x, transform.position.y, newPos.z);
     }
 }
