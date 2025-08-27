@@ -6,7 +6,7 @@ dict = {
     1: {
         "players": [
             {
-                "id": 0,
+                "id": 1,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
@@ -16,7 +16,7 @@ dict = {
                 "state": "alive",
             },
             {
-                "id": 2,
+                "id": 1,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
@@ -29,7 +29,8 @@ dict = {
         "dice": {"red": 1, "black": 5},
         "poi": [
             {"state": "fake", "position": {"x": 10, "z": 10}},
-            {"state": "fake", "position": {"x": 10, "z": 10}},
+            {"state": "alive", "position": {"x": 10, "z": 10}},
+            {"state": "dead", "position": {"x": 10, "z": 10}},
         ],
         "damage": 5,
     },
