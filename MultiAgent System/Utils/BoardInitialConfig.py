@@ -20,10 +20,17 @@ doorLocations = [[1, 3, 1, 4], [2, 5, 2, 6], [2, 8, 3, 8], [3, 2, 3, 3], [4, 4, 
 # [x, y]
 accessPoints = [[1, 6], [3, 1], [4, 8], [6, 3]]
 
+# Añadir los puntos en los que pueden aparecer los bomberos
+spawnPoints = []
+
+ambulancePosition = []
+
 boardConfig = {
     "cells": cells,
     "POILocations": POILocations,
     "fireLocations": fireLocations,
     "doorLocations": doorLocations,
-    "accessPoints": accessPoints
+    "accessPoints": accessPoints,
+    "spwanPoints": spawnPoints,
+    "ambulancePosition": ambulancePosition,
 }

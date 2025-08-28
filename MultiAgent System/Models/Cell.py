@@ -2,10 +2,8 @@ from Door import Door
 from Wall import Wall
 
 class Cell:
-    def __init__(self, pos, wallLayout, doorLocations, poi = None, fire = None):
+    def __init__(self, pos, wallLayout, doorLocations):
         self.pos = pos
-        self.poi = poi
-        self.fire = fire
         self.isAccessPoint = False
         self.walls = {"up": None, "right": None, "down": None, "left": None}
         self.doors = {"up": None, "right": None, "down": None, "left": None}
