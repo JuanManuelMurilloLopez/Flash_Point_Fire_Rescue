@@ -30,36 +30,56 @@ class Firefighter(Agent):
             self.checkPOI()
             self.checkFire()
 
+    # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
-        # Revisar si hay un POI en la posición del firefighter
-        for poi in self.model.POIs:
-            if self.pos[0] == poi[0] and self.pos[1] == poi[1]:
-                if poi[2] == 1:
-                    # Victima encontrada
-                    self.carryingVictim = True
-                    # TODO: implementar ruta a la salida
-                elif poi[2] == 0:
-                    # Falsa alarma
-                    # TODO: quitar POI del tablero
-                    return
+        # Revisar si hay un POI en la posición del bombero
+        poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
 
+        if poiAtPos:
+            poiAtPos[0].reveal()
+            # Si el POI es una víctima, la recuperamos
+            if poiAtPos[0].victim == 1:
+                self.carryingVictim = True
+            # Si el POI era una falsa alarma, la eliminamos
+            elif poiAtPos[0].victim == 0:
+                self.model.POIs.remove(poiAtPos[0])
 
-    def checkFire(self):
-        # Si la casilla en la que está tiene fuego, apagarlo (siguiendo las reglas del juego)
-        agentsInCell = self.model.grid.get_cell_list_contents([self.pos])
+    # Revisar si en la posición dada hay fuego
+    def checkFire(self, position, fireState):
+        # Revisar si hay fuego en la posición del bombero
+        fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
 
-        for agent in agentsInCell:
-            if isinstance(agent, Fire):
-                if agent.state == "fire":
-                    self.knockedDown = True
-                    self.model.moveToAmbulance(self)
-                elif agent.state == "smoke":
-                    # TODO: Lógica para elegir aleatoreamente si se apaga o no
-                    pass
+        if fireAtPos:
+            return True
+        else:
+            return False
 
-        if self.pos in self.model.fireLocations:
-            # TODO: Implementar apagar fuego
-            pass
+    # action -> "removeFire", "removeSmoke", "flipFire"
+    # Apagar el fuego en la posición indicada
+    def extinguishFire(self, position, action):
+
+        # Rescatamos el fuego en la posición
+        fireAtPos = [f for f in self.model.fires if f.pos == position]
+
+        ### TERMINAR ESTO
+
+        # Si no hay fuego no hacemos nada
+        if not fireAtPos:
+            return
+
+        # Si hay fuego lo guardamos
+        fire = fireAtPos[0]
+
+        # Procedimiento dependiendo de la acción, quitamos action points y eliminamos o modificamos el fuego
+        if fire.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
+            self.model.fires.remove(fire)
+            self.actionPoints -= 1
+        elif fire.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
+            self.model.fires.remove(fire)
+            self.actionPoints -= 2
+        elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
+            fire.smoke()
+            self.actionPoints -= 1
 
     def openCloseDoor(self, cell):
         # Abrir o cerrar puerta en la celda indicada (1 action point)
@@ -67,28 +87,12 @@ class Firefighter(Agent):
             # TODO: Añadir lógica para modificar el estado de la puerta
             self.actionPoints -= 1
 
-    # action -> "removeFire", "removeSmoke", "flipFire"
-    def extinguishFire(self, cell, action):
-        # Apagar fuego en la celda indicada (1 AP para humo, 2 AP para fuego)
-        agents = self.model.grid.get_cell_list_contents([cell])
-        for agent in agents:
-            if isinstance(agent, Fire):
-                if agent.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
-                    agent.extinguish()
-                    self.actionPoints -= 1
-                elif agent.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
-                    agent.extinguish()
-                    self.actionPoints -= 1
-                elif agent.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
-                    agent.smoke()
-                    self.actionPoints -= 1
-
     def saveVictim(self, cell):
         # Llevar a la víctima afuera, 2 AP
         # TODO: Lógica para llevar la víctima a la salida
         pass
 
-    def chopWall(self, cell):
+    def chopWall(self, cell, orientation):
         # Colocar daño en la pared para abrir camino (2 AP por daño, cuando la pared tiene 2 de daño se destruye)
         if self.actionPoints >= 2:
             # TODO: Lógica para el daño a la pared

@@ -109,7 +109,10 @@ class FireRescueModel(Model):
             PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
             if PoiAtPos:
                 self.POIs.remove(PoiAtPos[0])
-                self.victimsLost += 1
+                # Revelamos el POI y si era una víctima la añadimos a las perdidas
+                PoiAtPos[0].reveal()
+                if PoiAtPos[0].victim == 1:
+                    self.victimsLost += 1
 
         else:
             for fire in firesAtPos:
