@@ -9,6 +9,7 @@ from ..Utils.BoardInitialConfig import boardConfig
 from ..Models.Firefighter import Firefighter
 from ..Models.Fire import Fire
 from .Poi import Poi
+from ..Models.Cell import Cell
 
 import numpy as np
 import random
@@ -28,6 +29,7 @@ class FireRescueModel(Model):
         # Se le agregan 2 para añadir el exterior
         self.grid = SingleGrid(width + 2, height + 2, torus = False)
         self.schedule = RandomActivation(self)
+
         self.datacollector = DataCollector(
             model_reporters={
                 "Grid": getGrid,
@@ -41,6 +43,7 @@ class FireRescueModel(Model):
         # Variables para conocer el estatus del juego
         self.victimsRescued = 0
         self.victimsLost = 0
+        self.damageTokens = 0
 
         # Número de POIs disponibles
         self.totalVictims = 10;
@@ -55,8 +58,18 @@ class FireRescueModel(Model):
         # Última tirada de dados
         self.dice = [0, 0]
 
+        self.cells = []
+        for y in range(self.height):
+            row = []
+            for x in range(self.width):
+                wallLayout = board["cells"][y][x]
+                cell = Cell([x, y], wallLayout, board["doorLocations"])
+                row.append(cell)
+            self.cells.append(row)
+
         # Información del tablero
         self.board = board
+
         # TODO: Modificar la posición de la ambulancia a la correcta
         self.ambulancePos = board["ambulancePosition"]
 
@@ -74,6 +87,7 @@ class FireRescueModel(Model):
             fire = Fire(self, pos)
             self.fires.append(fire)
 
+        # Creación de los bomberos
         posiblePositions = np.random.permutation(board["spawnPositions"])
         # Añadir los Firefighters
         for i in range(noOfAagents):
@@ -160,13 +174,29 @@ class FireRescueModel(Model):
     # Encontrar los vecinos (Falta validar, se pidió a Chat)
     def getNeighbors(self, x, y):
         # Explicar / comentar código
-        directions = [(1,0), (-1,0), (0,1), (0,-1)]
         neighbors = []
-        for dx, dy in directions:
+        directions = {
+            "up": (0, -1),
+            "right": (1, 0),
+            "down": (0, 1),
+            "left": (-1, 0)
+        }
+
+        currentCell = self.cells[y][x]
+
+
+        for dir, (dx, dy) in directions.items():
             nx, ny = x + dx, y + dy
             if 0 <= nx < self.width and 0 <= ny < self.height:
-                # TODO: verificar paredes/puertas con self.board_config
-                neighbors.append((nx, ny))
+                # Si hay pared, no se puede pasar
+                if currentCell.walls[dir] is not None:
+                    continue
+                # Si hay puerta cerrada, no se puede pasar
+                if currentCell.doors[dir] is not None and not currentCell.doors[dir].isOpen:
+                    continue
+
+            neighbors.append((nx, ny))
+    
         return neighbors
 
     # Añadir la lógica del step

@@ -11,6 +11,7 @@ class Firefighter(Agent):
         self.carryingVictim = False
         self.knockedDown = False
 
+    # TODO: Terminar lógica del step
     def step(self):
         while self.actionPoints > 0:
             self.move()
@@ -18,6 +19,7 @@ class Firefighter(Agent):
 
         self.actionPoints += 4
 
+    # TODO: Cambiar la lógica del checkFire acorde a la nueva implementación
     def move(self):
         # Movimiento aleatorio a una celda vecina
         possiblePositions = self.model.grid.get_neighborhood(self.pos, moore = False, include_center = False)
@@ -61,8 +63,6 @@ class Firefighter(Agent):
         # Rescatamos el fuego en la posición
         fireAtPos = [f for f in self.model.fires if f.pos == position]
 
-        ### TERMINAR ESTO
-
         # Si no hay fuego no hacemos nada
         if not fireAtPos:
             return
@@ -81,19 +81,42 @@ class Firefighter(Agent):
             fire.smoke()
             self.actionPoints -= 1
 
-    def openCloseDoor(self, cell):
-        # Abrir o cerrar puerta en la celda indicada (1 action point)
+    # Cambia el estado de la puerta (Si no está destruida)
+    def openCloseDoor(self):
         if self.actionPoints >= 1:
-            # TODO: Añadir lógica para modificar el estado de la puerta
-            self.actionPoints -= 1
+            cell = self.model.cells[self.pos[0]][self.pos[1]]
+            if cell.hasDoor():
+                cell.changeDoorStatus()
+                self.actionPoints -= 1
+        else:
+            return
 
-    def saveVictim(self, cell):
-        # Llevar a la víctima afuera, 2 AP
+    def saveVictim(self):
         # TODO: Lógica para llevar la víctima a la salida
         pass
 
-    def chopWall(self, cell, orientation):
+    def chopWall(self, orientation):
         # Colocar daño en la pared para abrir camino (2 AP por daño, cuando la pared tiene 2 de daño se destruye)
         if self.actionPoints >= 2:
-            # TODO: Lógica para el daño a la pared
+
+            # Obtenemos la celda
+            cell = self.model.cells[self.pos[0]][self.pos[1]]
+            # Obtenemos la pared
+            wall = cell.walls[orientation]
+
+            # Verificamos que no esté destruida
+            if wall.isDestroyed():
+                return
+            
+            # Añadimos el daño a la pared
+            wall.addDamage()
+            # Agregamos el daño al contador del modelo
+            self.model.damageTokens += 1
+
+            # Revisamos si existía una puerta en esa pared
+            door = cell.doors[orientation]
+            if door:
+                door.destroy()
+
             self.actionPoints -= 2
+            

@@ -47,4 +47,25 @@ class Cell:
                     self.doors["right"] = door
                 elif x1 == x2 - 1 and y1 == y2:
                     self.doors["left"] = door
-        
+
+    # Regresa si hay una puerta en la celda (las destruidas no cuentan)
+    def hasDoor(self):
+        doors = any(door is not None for door in self.doors.values())
+        if doors:
+            door = [door for door in self.doors.values() if door is not None][0]
+
+            if door.state == "destroyed":
+                return False
+            else:
+                return True
+        else:
+            return False
+    
+    # Modifica el estado de la puerta
+    def changeDoorStatus(self):
+        door = [door for door in self.doors.values() if door is not None][0]
+
+        if door.state == "open":
+            door.close()
+        if door.state == "closed":
+            door.open()
