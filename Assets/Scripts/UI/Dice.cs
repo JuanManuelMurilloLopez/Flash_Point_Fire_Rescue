@@ -6,10 +6,11 @@ public class Dice : MonoBehaviour
     public Image image;
     public Sprite[] spriteArray;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
         image = gameObject.GetComponent<Image>();
+        Debug.Log(Resources.LoadAll($"UI/{gameObject.name}"));
+        spriteArray = Resources.LoadAll<Sprite>($"UI/{gameObject.name}");
     }
 
     public void ChangeSprite(int number)

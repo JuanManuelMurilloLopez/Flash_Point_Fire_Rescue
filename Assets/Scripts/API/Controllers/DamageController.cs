@@ -17,7 +17,6 @@ public class DamageController : MonoBehaviour
       if (damageCounter)
       {
         dmg = damageCounter.GetComponent<Damage>();
-        Debug.Log("DamageUI encontrada");
       }
       else 
       {
