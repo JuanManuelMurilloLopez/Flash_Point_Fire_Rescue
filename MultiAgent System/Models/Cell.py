@@ -1,5 +1,5 @@
-from Door import Door
-from Wall import Wall
+from .Door import Door
+from .Wall import Wall
 
 class Cell:
     def __init__(self, pos, wallLayout, doorLocations):

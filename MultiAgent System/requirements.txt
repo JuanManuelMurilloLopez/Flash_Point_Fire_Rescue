@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+seaborn
+scikit-learn
+mesa==3.0
+Flask

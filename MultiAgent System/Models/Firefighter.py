@@ -1,8 +1,6 @@
 import numpy as np
 from mesa import Agent, Model
 
-from Fire import Fire
-
 class Firefighter(Agent):
     def __init__(self, model, initialPos):
         super().__init__(model)

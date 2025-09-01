@@ -31,6 +31,6 @@ boardConfig = {
     "fireLocations": fireLocations,
     "doorLocations": doorLocations,
     "accessPoints": accessPoints,
-    "spwanPoints": spawnPoints,
+    "spawnPoints": spawnPoints,
     "ambulancePosition": ambulancePosition,
 }

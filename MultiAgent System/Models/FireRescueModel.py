@@ -4,12 +4,12 @@ from mesa.time import RandomActivation
 from mesa.datacollection import DataCollector
 from mesa.batchrunner import batch_run
 
-from ..Utils.getGrid import getGrid
-from ..Utils.BoardInitialConfig import boardConfig
-from ..Models.Firefighter import Firefighter
-from ..Models.Fire import Fire
+from Utils.getGrid import getGrid
+from Utils.BoardInitialConfig import boardConfig
+from .Firefighter import Firefighter
+from .Fire import Fire
 from .Poi import Poi
-from ..Models.Cell import Cell
+from .Cell import Cell
 
 import numpy as np
 import random
@@ -77,7 +77,7 @@ class FireRescueModel(Model):
         self.POIs = []
         for poiData in board["POILocations"]:
             # Creamos el agente en la posición indicada
-            poi = Poi(self, (poiData[0], poiData[1]), poiData[3])
+            poi = Poi((poiData[0], poiData[1]), poiData[2])
             self.POIs.append(poi)
 
         # Añadimos el fuego inicial
@@ -88,10 +88,20 @@ class FireRescueModel(Model):
             self.fires.append(fire)
 
         # Creación de los bomberos
-        posiblePositions = np.random.permutation(board["spawnPositions"])
+        # possiblePositions = np.random.permutation(board["spawnPoints"])
+
+        possiblePositions = []
+        for i in range(width):
+            possiblePositions.append([i, 0])
+            possiblePositions.append([i, height])
+
+        for i in range(height):
+            possiblePositions.append([0, i])
+            possiblePositions.append([width, i])
+        
         # Añadir los Firefighters
         for i in range(noOfAagents):
-            pos = posiblePositions[i]
+            pos = possiblePositions[i]
             fireFighter = Firefighter(self, pos)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
