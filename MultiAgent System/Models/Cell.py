@@ -1,12 +1,14 @@
 from .Door import Door
 from .Wall import Wall
 
+
 class Cell:
     def __init__(self, pos, wallLayout, doorLocations):
         self.pos = pos
         self.isAccessPoint = False
         self.walls = {"up": None, "right": None, "down": None, "left": None}
         self.doors = {"up": None, "right": None, "down": None, "left": None}
+        self.poi = None
 
         # Añadir las paredes a la celda
         if wallLayout[0] == 1:
@@ -24,7 +26,12 @@ class Cell:
 
         # Añadir las puertas a la celda
         for doorL in doorLocations:
-            x1, y1, x2, y2, = doorL
+            (
+                x1,
+                y1,
+                x2,
+                y2,
+            ) = doorL
 
             if self.pos == [x1, y1]:
                 door = Door(x1, y1, x2, y2)
@@ -60,7 +67,7 @@ class Cell:
                 return True
         else:
             return False
-    
+
     # Modifica el estado de la puerta
     def changeDoorStatus(self):
         door = [door for door in self.doors.values() if door is not None][0]
