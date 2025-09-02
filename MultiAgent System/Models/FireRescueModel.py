@@ -164,25 +164,26 @@ class FireRescueModel(Model):
                 fire.fire()
 
             # Si es fuego, creamos una explosión
-            elif fire.state == "smoke":
+            elif fire.state == "fire":
                 self.explosion(self.dice)
 
 
     # TODO: Añadir lógica para cuando las celdas adyacentes estén fuera del tablero
     def explosion(self, pos):
+  
         ### Arriba ###
         upPos = (pos[0], pos[1] + 1)
         upFire = self.fires[upPos]
         if upFire != 0:
             # Si ya había fuego, empezar shockwave
             if upFire.state == "fire":
-                self.shockwave(upPos)
+                self.shockwave(upPos, "up")
         else:
             # Si no había fuego, añadirlo
             upFire = Fire(upPos)
             self.fires[upPos] = upFire
 
-            cell = self.cells[pos]
+            cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
             # Si hay pared y aún no está destruida, aumentar daño
             if cell.walls["up"]:
@@ -219,13 +220,13 @@ class FireRescueModel(Model):
         if downFire != 0:
             # Si ya había fuego, empezar shockwave
             if downFire.state == "fire":
-                self.shockwave(downPos)
+                self.shockwave(downPos, "down")
         else:
             # Si no había fuego, añadirlo
             downFire = Fire(downPos)
             self.fires[downPos] = downFire
 
-            cell = self.cells[pos]
+            cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
             # Si hay pared y aún no está destruida, aumentar daño
             if cell.walls["down"]:
@@ -255,19 +256,20 @@ class FireRescueModel(Model):
                     self.victimsLost += 1
                 self.POIs[downPos] = 0
                 self.activePois -= 1
+
         ### Derecha ###
         rPos = (pos[0] + 1, pos[1])
         rFire = self.fires[rPos]
         if rFire != 0:
             # Si ya había fuego, empezar shockwave
             if rFire.state == "fire":
-                self.shockwave(rPos)
+                self.shockwave(rPos, "right")
         else:
             # Si no había fuego, añadirlo
             rFire = Fire(rPos)
             self.fires[rPos] = rFire
 
-            cell = self.cells[pos]
+            cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
             # Si hay pared y aún no está destruida, aumentar daño
             if cell.walls["right"]:
@@ -304,13 +306,13 @@ class FireRescueModel(Model):
         if lFire != 0:
             # Si ya había fuego, empezar shockwave
             if lFire.state == "fire":
-                self.shockwave(lPos)
+                self.shockwave(lPos, "left")
         else:
             # Si no había fuego, añadirlo
             lFire = Fire(lPos)
             self.fires[lPos] = lFire
 
-            cell = self.cells[pos]
+            cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
             # Si hay pared y aún no está destruida, aumentar daño
             if cell.walls["left"]:
@@ -342,7 +344,65 @@ class FireRescueModel(Model):
                 self.activePois -= 1
 
 
-    def shockwave(self, pos):
+    def shockwave(self, pos, direction):
+        # Mapear direcciones a vectores
+        directions = {
+            "up": (0, 1),
+            "down": (0, -1),
+            "right": (1, 0),
+            "left": (-1, 0)
+        }
+        dx, dy = directions[direction]
+
+        x, y = pos
+        while True:
+            x += dx
+            y += dy
+
+            # Detener si salimos del tablero
+            if not (0 <= x < self.width + 2 and 0 <= y < self.height + 2):
+                break
+
+            pos = (x, y)
+            cell = self.cells[y][x]
+
+            # Dañar pared
+            if cell.walls.get(direction):
+                if not cell.walls[direction].isDestroyed():
+                    cell.walls[direction].addDamage()
+                    self.damageTokens += 1
+                break
+
+            # Destruir puerta si existe
+            if cell.doors.get(direction):
+                if not cell.doors[direction].isDestroyed():
+                    cell.doors[direction].destroy()
+                break
+
+            # Colocar fuego
+            fire = self.fires[y][x]
+            if fire == 0:
+                fire = Fire(pos, state="fire")
+                self.fires[y][x] = fire
+                cell.fire = fire
+                break
+
+            # Verificar bomberos
+            firefighterAtPos = self.grid.get_cell_list_contents([pos])
+            for ff in firefighterAtPos:
+                self.moveToAmbulance(ff)
+                ff.knockedDown = True
+
+            # Verificar POIs
+            poiAtPos = self.POIs[y][x]
+            if poiAtPos != 0:
+                poiAtPos.reveal()
+                if poiAtPos.victim == 1:
+                    self.victimsLost += 1
+                self.POIs[y][x] = 0
+                self.activePois -= 1
+
+    def flashover(self):
         pass
 
     # Cuando un firefighter está en knockout, moverlo a la posición de la ambulancia
