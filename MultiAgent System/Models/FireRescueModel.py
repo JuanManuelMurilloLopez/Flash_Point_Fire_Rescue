@@ -74,19 +74,35 @@ class FireRescueModel(Model):
         self.ambulancePos = board["ambulancePosition"]
 
         # Añadimos los POI iniciales
-        self.POIs = []
+        self.activePois = 3
+        self.POIs = np.zeros((height + 2, width + 2))
+        for poiData in board["POILocations"]:
+            # Creamos el POI en la posición indicada
+            poi = Poi((poiData[0], poiData[1]), poiData[2])
+            self.POIs[poiData[0]][poiData[1]] = poi
+
+        # Añadimos los POI iniciales
+        '''self.POIs = []
         for poiData in board["POILocations"]:
             # Creamos el agente en la posición indicada
             poi = Poi((poiData[0], poiData[1]), poiData[2])
             self.POIs.append(poi)
+        '''
 
         # Añadimos el fuego inicial
-        self.fires = []
+        self.fires = np.zeros((height + 2, width + 2))
+        for pos in board["fireLocations"]:
+            fire = Fire(pos, state="fire")
+            self.fires[pos[0]][pos[1]] = fire
+
+        # Añadimos el fuego inicial
+        '''self.fires = []
         # Creamos el agente en la posición indicada
         for pos in board["fireLocations"]:
             fire = Fire(self, pos)
             self.fires.append(fire)
-
+        '''
+            
         # Creación de los bomberos
         # possiblePositions = np.random.permutation(board["spawnPoints"])
 
@@ -115,12 +131,13 @@ class FireRescueModel(Model):
         self.rollDice()
 
         # Buscamos si ya hay fuego en esa localidad
-        firesAtPos = [f for f in self.fires if f.pos == self.dice]
+        #firesAtPos = [f for f in self.fires if f.pos == self.dice]
+        firesAtPos = self.fires[self.dice[0]][self.dice[1]]
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
-        if not firesAtPos:
+        if firesAtPos == 0:
             fire = Fire(self.dice, state = "smoke");
-            self.fires.append(fire);
+            self.fires[self.dice[0]][self.dice[1]] = fire
         
             # Si había bomberos en la localidad, serán derrotados
             firefighterAtPos = self.grid.get_cell_list_contents([self.dice])
@@ -130,23 +147,25 @@ class FireRescueModel(Model):
             
 
             # Si había POIs en la localidad, serán perdidos
-            PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
-            if PoiAtPos:
-                self.POIs.remove(PoiAtPos[0])
+            #PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
+            PoiAtPos = self.POIs[self.dice[0]][self.dice[1]]
+
+            if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
-                PoiAtPos[0].reveal()
-                if PoiAtPos[0].victim == 1:
+                PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                self.POIs[self.pos[0]][self.pos[1]] = 0
+                self.activePois -= 1
 
         else:
-            for fire in firesAtPos:
-                # Si es humo, lo hacemos fuego
-                if fire.state == "smoke":
-                    fire.fire()
+            # Si es humo, lo hacemos fuego
+            if fire.state == "smoke":
+                fire.fire()
 
-                # Si es fuego, creamos una explosión
-                elif fire.state == "fire":
-                    self.explosion(self.dice)
+            # Si es fuego, creamos una explosión
+            elif fire.state == "smoke":
+                self.explosion(self.dice)
 
 
     # TODO: Añadir lógica de las explosiones
@@ -232,8 +251,7 @@ class FireRescueModel(Model):
     # Añadir los nuevos POI al final de cada ronda
     def replendishPOI(self):
 
-        currentPOIs = [a for a in self.POIs if not a.rescued and not a.lost]
-        newPOIsNeeded = 3 - len(currentPOIs)
+        newPOIsNeeded = 3 - self.activePois
 
         if newPOIsNeeded == 0:
             return
@@ -253,17 +271,17 @@ class FireRescueModel(Model):
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:
                     victim = np.random.randint(0, 2)
                     poi = Poi(self.dice, victim)
-                    self.POIs.append(poi)
+                    self.POIs[self.dice[0]][self.dice[1]] = poi
 
                 # Si solo hay víctimas, se inicializa como víctima
                 elif self.totalVictims > 0:
                     poi = Poi(self.dice, 1)
-                    self.POIs.append(poi)
+                    self.POIs[self.dice[0]][self.dice[1]] = poi
 
                 # Si solo hay falsas alarmas, se inicializa como falsa alarma
                 elif self.totalFalseAlarms > 0:
                     poi = Poi(self.dice, 0)
-                    self.POIs.append(poi)
+                    self.POIs[self.dice[0]][self.dice[1]] = poi
 
                 else:
                     print("Ya no hay POI disponibles")

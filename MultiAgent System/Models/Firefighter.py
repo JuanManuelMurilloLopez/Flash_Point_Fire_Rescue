@@ -33,24 +33,28 @@ class Firefighter(Agent):
     # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
         # Revisar si hay un POI en la posición del bombero
-        poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
+        #poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
+        poiAtPos = self.model.POIs[self.pos[0]][self.pos[1]]
 
-        if poiAtPos:
-            poiAtPos[0].reveal()
+        if poiAtPos != 0:
+            poiAtPos.reveal()
             # Si el POI es una víctima, la recuperamos
-            if poiAtPos[0].victim == 1:
+            if poiAtPos.victim == 1:
                 self.carryingVictim = True
             # Si el POI era una falsa alarma, la eliminamos
-            elif poiAtPos[0].victim == 0:
-                self.model.POIs.remove(poiAtPos[0])
+            elif poiAtPos.victim == 0:
+                self.model.POIs[self.pos[0]][self.pos[1]] = 0
+                self.model.activePois -= 1
 
     # Revisar si en la posición dada hay fuego
     def checkFire(self, position, fireState):
         # Revisar si hay fuego en la posición del bombero
-        fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
+        #fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
+        fireAtPos = self.model.POIs[position[0]][position[1]]
 
-        if fireAtPos:
-            return True
+        if fireAtPos != 0:
+            if fireAtPos.state == fireState:
+                return True
         else:
             return False
 
@@ -59,21 +63,19 @@ class Firefighter(Agent):
     def extinguishFire(self, position, action):
 
         # Rescatamos el fuego en la posición
-        fireAtPos = [f for f in self.model.fires if f.pos == position]
+        #fireAtPos = [f for f in self.model.fires if f.pos == position]
+        fire = self.model.POIs[position[0]][position[1]]
 
         # Si no hay fuego no hacemos nada
-        if not fireAtPos:
+        if fire == 0:
             return
-
-        # Si hay fuego lo guardamos
-        fire = fireAtPos[0]
 
         # Procedimiento dependiendo de la acción, quitamos action points y eliminamos o modificamos el fuego
         if fire.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
-            self.model.fires.remove(fire)
+            self.model.POIs[position[0]][position[1]] = 0
             self.actionPoints -= 1
         elif fire.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
-            self.model.fires.remove(fire)
+            self.model.POIs[position[0]][position[1]] = 0
             self.actionPoints -= 2
         elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
             fire.smoke()
