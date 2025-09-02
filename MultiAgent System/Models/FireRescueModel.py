@@ -79,7 +79,7 @@ class FireRescueModel(Model):
         for poiData in board["POILocations"]:
             # Creamos el POI en la posición indicada
             poi = Poi((poiData[0], poiData[1]), poiData[2])
-            self.POIs[poiData[0]][poiData[1]] = poi
+            self.POIs[poiData] = poi
 
         # Añadimos los POI iniciales
         '''self.POIs = []
@@ -93,7 +93,7 @@ class FireRescueModel(Model):
         self.fires = np.zeros((height + 2, width + 2))
         for pos in board["fireLocations"]:
             fire = Fire(pos, state="fire")
-            self.fires[pos[0]][pos[1]] = fire
+            self.fires[pos] = fire
 
         # Añadimos el fuego inicial
         '''self.fires = []
@@ -132,12 +132,12 @@ class FireRescueModel(Model):
 
         # Buscamos si ya hay fuego en esa localidad
         #firesAtPos = [f for f in self.fires if f.pos == self.dice]
-        firesAtPos = self.fires[self.dice[0]][self.dice[1]]
+        firesAtPos = self.fires[self.dice]
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
         if firesAtPos == 0:
             fire = Fire(self.dice, state = "smoke");
-            self.fires[self.dice[0]][self.dice[1]] = fire
+            self.fires[self.dice] = fire
         
             # Si había bomberos en la localidad, serán derrotados
             firefighterAtPos = self.grid.get_cell_list_contents([self.dice])
@@ -148,14 +148,14 @@ class FireRescueModel(Model):
 
             # Si había POIs en la localidad, serán perdidos
             #PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
-            PoiAtPos = self.POIs[self.dice[0]][self.dice[1]]
+            PoiAtPos = self.POIs[self.dice]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[self.pos[0]][self.pos[1]] = 0
+                self.POIs[self.pos] = 0
                 self.activePois -= 1
 
         else:
@@ -168,8 +168,181 @@ class FireRescueModel(Model):
                 self.explosion(self.dice)
 
 
-    # TODO: Añadir lógica de las explosiones
+    # TODO: Añadir lógica para cuando las celdas adyacentes estén fuera del tablero
     def explosion(self, pos):
+        ### Arriba ###
+        upPos = (pos[0], pos[1] + 1)
+        upFire = self.fires[upPos]
+        if upFire != 0:
+            # Si ya había fuego, empezar shockwave
+            if upFire.state == "fire":
+                self.shockwave(upPos)
+        else:
+            # Si no había fuego, añadirlo
+            upFire = Fire(upPos)
+            self.fires[upPos] = upFire
+
+            cell = self.cells[pos]
+            # Revisar si había una pared
+            # Si hay pared y aún no está destruida, aumentar daño
+            if cell.walls["up"]:
+                if not cell.walls["up"].isDestroyed():
+                    cell.walls["up"].addDamage()
+                    self.damageTokens += 1
+            
+            # Revisar si había una puerta
+            # Si hay puerta y no está destruida, destruirla
+            if cell.doors["up"]:
+                if not cell.doors["up"].isDestroyed():
+                    cell.doors["up"].destroy()
+
+            # Si había bomberos en la localidad, serán derrotados
+            firefighterAtPos = self.grid.get_cell_list_contents([upPos])
+            if firefighterAtPos:
+                self.moveToAmbulance(firefighterAtPos[0])
+                firefighterAtPos[0].knockedDown = True
+
+            # Si había POIs en la localidad, serán perdidos
+            PoiAtPos = self.POIs[upPos]
+
+            if PoiAtPos != 0:
+                # Revelamos el POI y si era una víctima la añadimos a las perdidas
+                PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                self.POIs[upPos] = 0
+                self.activePois -= 1
+
+        ### Abajo ###
+        downPos = (pos[0], pos[1] - 1)
+        downFire = self.fires[downPos]
+        if downFire != 0:
+            # Si ya había fuego, empezar shockwave
+            if downFire.state == "fire":
+                self.shockwave(downPos)
+        else:
+            # Si no había fuego, añadirlo
+            downFire = Fire(downPos)
+            self.fires[downPos] = downFire
+
+            cell = self.cells[pos]
+            # Revisar si había una pared
+            # Si hay pared y aún no está destruida, aumentar daño
+            if cell.walls["down"]:
+                if not cell.walls["down"].isDestroyed():
+                    cell.walls["down"].addDamage()
+                    self.damageTokens += 1
+            
+            # Revisar si había una puerta
+            # Si hay puerta y no está destruida, destruirla
+            if cell.doors["down"]:
+                if not cell.doors["down"].isDestroyed():
+                    cell.doors["down"].destroy()
+
+            # Si había bomberos en la localidad, serán derrotados
+            firefighterAtPos = self.grid.get_cell_list_contents([downPos])
+            if firefighterAtPos:
+                self.moveToAmbulance(firefighterAtPos[0])
+                firefighterAtPos[0].knockedDown = True
+
+            # Si había POIs en la localidad, serán perdidos
+            PoiAtPos = self.POIs[downPos]
+
+            if PoiAtPos != 0:
+                # Revelamos el POI y si era una víctima la añadimos a las perdidas
+                PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                self.POIs[downPos] = 0
+                self.activePois -= 1
+        ### Derecha ###
+        rPos = (pos[0] + 1, pos[1])
+        rFire = self.fires[rPos]
+        if rFire != 0:
+            # Si ya había fuego, empezar shockwave
+            if rFire.state == "fire":
+                self.shockwave(rPos)
+        else:
+            # Si no había fuego, añadirlo
+            rFire = Fire(rPos)
+            self.fires[rPos] = rFire
+
+            cell = self.cells[pos]
+            # Revisar si había una pared
+            # Si hay pared y aún no está destruida, aumentar daño
+            if cell.walls["right"]:
+                if not cell.walls["right"].isDestroyed():
+                    cell.walls["right"].addDamage()
+                    self.damageTokens += 1
+            
+            # Revisar si había una puerta
+            # Si hay puerta y no está destruida, destruirla
+            if cell.doors["right"]:
+                if not cell.doors["right"].isDestroyed():
+                    cell.doors["right"].destroy()
+
+            # Si había bomberos en la localidad, serán derrotados
+            firefighterAtPos = self.grid.get_cell_list_contents([rPos])
+            if firefighterAtPos:
+                self.moveToAmbulance(firefighterAtPos[0])
+                firefighterAtPos[0].knockedDown = True
+
+            # Si había POIs en la localidad, serán perdidos
+            PoiAtPos = self.POIs[rPos]
+
+            if PoiAtPos != 0:
+                # Revelamos el POI y si era una víctima la añadimos a las perdidas
+                PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                self.POIs[rPos] = 0
+                self.activePois -= 1
+
+        ### Izquierda ###
+        lPos = (pos[0] - 1, pos[1])
+        lFire = self.fires[lPos]
+        if lFire != 0:
+            # Si ya había fuego, empezar shockwave
+            if lFire.state == "fire":
+                self.shockwave(lPos)
+        else:
+            # Si no había fuego, añadirlo
+            lFire = Fire(lPos)
+            self.fires[lPos] = lFire
+
+            cell = self.cells[pos]
+            # Revisar si había una pared
+            # Si hay pared y aún no está destruida, aumentar daño
+            if cell.walls["left"]:
+                if not cell.walls["left"].isDestroyed():
+                    cell.walls["left"].addDamage()
+                    self.damageTokens += 1
+            
+            # Revisar si había una puerta
+            # Si hay puerta y no está destruida, destruirla
+            if cell.doors["left"]:
+                if not cell.doors["left"].isDestroyed():
+                    cell.doors["left"].destroy()
+
+            # Si había bomberos en la localidad, serán derrotados
+            firefighterAtPos = self.grid.get_cell_list_contents([lPos])
+            if firefighterAtPos:
+                self.moveToAmbulance(firefighterAtPos[0])
+                firefighterAtPos[0].knockedDown = True
+
+            # Si había POIs en la localidad, serán perdidos
+            PoiAtPos = self.POIs[lPos]
+
+            if PoiAtPos != 0:
+                # Revelamos el POI y si era una víctima la añadimos a las perdidas
+                PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                self.POIs[lPos] = 0
+                self.activePois -= 1
+
+
+    def shockwave(self, pos):
         pass
 
     # Cuando un firefighter está en knockout, moverlo a la posición de la ambulancia
@@ -271,17 +444,17 @@ class FireRescueModel(Model):
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:
                     victim = np.random.randint(0, 2)
                     poi = Poi(self.dice, victim)
-                    self.POIs[self.dice[0]][self.dice[1]] = poi
+                    self.POIs[self.dice] = poi
 
                 # Si solo hay víctimas, se inicializa como víctima
                 elif self.totalVictims > 0:
                     poi = Poi(self.dice, 1)
-                    self.POIs[self.dice[0]][self.dice[1]] = poi
+                    self.POIs[self.dice] = poi
 
                 # Si solo hay falsas alarmas, se inicializa como falsa alarma
                 elif self.totalFalseAlarms > 0:
                     poi = Poi(self.dice, 0)
-                    self.POIs[self.dice[0]][self.dice[1]] = poi
+                    self.POIs[self.dice] = poi
 
                 else:
                     print("Ya no hay POI disponibles")

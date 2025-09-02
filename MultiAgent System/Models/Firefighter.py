@@ -34,7 +34,7 @@ class Firefighter(Agent):
     def checkPOI(self):
         # Revisar si hay un POI en la posición del bombero
         #poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
-        poiAtPos = self.model.POIs[self.pos[0]][self.pos[1]]
+        poiAtPos = self.model.POIs[self.pos]
 
         if poiAtPos != 0:
             poiAtPos.reveal()
@@ -43,14 +43,14 @@ class Firefighter(Agent):
                 self.carryingVictim = True
             # Si el POI era una falsa alarma, la eliminamos
             elif poiAtPos.victim == 0:
-                self.model.POIs[self.pos[0]][self.pos[1]] = 0
+                self.model.POIs[self.pos] = 0
                 self.model.activePois -= 1
 
     # Revisar si en la posición dada hay fuego
     def checkFire(self, position, fireState):
         # Revisar si hay fuego en la posición del bombero
         #fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
-        fireAtPos = self.model.POIs[position[0]][position[1]]
+        fireAtPos = self.model.POIs[position]
 
         if fireAtPos != 0:
             if fireAtPos.state == fireState:
@@ -64,7 +64,7 @@ class Firefighter(Agent):
 
         # Rescatamos el fuego en la posición
         #fireAtPos = [f for f in self.model.fires if f.pos == position]
-        fire = self.model.POIs[position[0]][position[1]]
+        fire = self.model.POIs[position]
 
         # Si no hay fuego no hacemos nada
         if fire == 0:
@@ -72,10 +72,10 @@ class Firefighter(Agent):
 
         # Procedimiento dependiendo de la acción, quitamos action points y eliminamos o modificamos el fuego
         if fire.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
-            self.model.POIs[position[0]][position[1]] = 0
+            self.model.POIs[position] = 0
             self.actionPoints -= 1
         elif fire.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
-            self.model.POIs[position[0]][position[1]] = 0
+            self.model.POIs[position] = 0
             self.actionPoints -= 2
         elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
             fire.smoke()
@@ -84,7 +84,7 @@ class Firefighter(Agent):
     # Cambia el estado de la puerta (Si no está destruida)
     def openCloseDoor(self):
         if self.actionPoints >= 1:
-            cell = self.model.cells[self.pos[0]][self.pos[1]]
+            cell = self.model.cells[self.pos]
             if cell.hasDoor():
                 cell.changeDoorStatus()
                 self.actionPoints -= 1
@@ -100,7 +100,7 @@ class Firefighter(Agent):
         if self.actionPoints >= 2:
 
             # Obtenemos la celda
-            cell = self.model.cells[self.pos[0]][self.pos[1]]
+            cell = self.model.cells[self.pos]
             # Obtenemos la pared
             wall = cell.walls[orientation]
 
