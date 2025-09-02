@@ -9,7 +9,6 @@ public class Dice : MonoBehaviour
     void Awake()
     {
         image = gameObject.GetComponent<Image>();
-        Debug.Log(Resources.LoadAll($"UI/{gameObject.name}"));
         spriteArray = Resources.LoadAll<Sprite>($"UI/{gameObject.name}");
     }
 

@@ -26,7 +26,7 @@ dict = {
             {"state": "fire", "position": {"x": 14, "z": 10}},
             {"state": "explosion", "position": {"x": 14, "z": 10}},
         ],
-        "dice": {"red": 1, "black": 5},
+        "dices": {"red": 3, "black": 5},
         "poi": [
             {"state": "fake", "position": {"x": 10, "z": 10}},
             {"state": "alive", "position": {"x": 10, "z": 10}},

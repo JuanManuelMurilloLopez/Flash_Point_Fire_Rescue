@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 4652467220631867373}
   - component: {fileID: 5087252958116099164}
   m_Layer: 5
-  m_Name: Dice2
+  m_Name: Black
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -144,7 +144,7 @@ GameObject:
   - component: {fileID: 4448744708682651149}
   - component: {fileID: 3147928529192724017}
   m_Layer: 5
-  m_Name: Dice1
+  m_Name: Red
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
