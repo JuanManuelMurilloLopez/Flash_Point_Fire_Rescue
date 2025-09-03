@@ -11,7 +11,7 @@ public class PythonServer : MonoBehaviour
         Response response = APIHelper.GetStep(number);
         foreach(Player player in response.players)
         {
-            players[player.id].GetComponent<Movement>().HandleAction(player);
+            // players[player.id].GetComponent<Movement>().HandleAction(player);
         }
         foreach(Fire fire in response.fires)
         {
