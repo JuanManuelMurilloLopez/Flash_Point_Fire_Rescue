@@ -6,18 +6,18 @@ dict = {
     1: {
         "players": [
             {
-                "id": 1,
-                "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
+                "id": 0,
+                "actions": [{"action": "move", "data": {"x": 0, "z": 0}}],
                 "state": "alive",
             },
             {
                 "id": 1,
-                "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
+                "actions": [{"action": "move", "data": {"x": 5, "z": 5}}],
                 "state": "alive",
             },
             {
-                "id": 1,
-                "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
+                "id": 2,
+                "actions": [{"action": "move", "data": {"x": 3, "z": 3}}],
                 "state": "alive",
             },
         ],
@@ -42,12 +42,12 @@ dict = {
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 2,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 3,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
@@ -61,12 +61,12 @@ dict = {
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 2,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 3,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
@@ -80,12 +80,12 @@ dict = {
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 2,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
             {
-                "id": 1,
+                "id": 3,
                 "actions": [{"action": "move", "data": {"x": 10, "z": 10}}],
                 "state": "alive",
             },
