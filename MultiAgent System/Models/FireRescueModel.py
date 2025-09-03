@@ -162,6 +162,7 @@ class FireRescueModel(Model):
                 self.activePois -= 1
 
         else:
+            fire = firesAtPos
             # Si es humo, lo hacemos fuego
             if fire.state == "smoke":
                 fire.fire()
