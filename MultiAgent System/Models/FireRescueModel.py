@@ -14,6 +14,7 @@ from .Cell import Cell
 import numpy as np
 import random
 from collections import deque
+from Utils.PriorityQueu import PriorityQueue
 
 
 class FireRescueModel(Model):
@@ -73,8 +74,9 @@ class FireRescueModel(Model):
         self.entrances = []
         # Añadir las entradas
         for x, y in board["accessPoints"]:
+            print(x, y)
             self.cells[x][y].isAccessPoint = True
-            self.entrances.append[(x, y)]
+            self.entrances.append((x, y))
 
         # Información del tablero
         self.board = board
@@ -170,27 +172,6 @@ class FireRescueModel(Model):
         self.grid.place_agent(firefighter, self.ambulancePos)
         firefighter.pos = self.ambulancePos
         firefighter.knockedDown = False
-
-    # BFS para sacar a las víctimas
-    def bfs(self, start, goal):
-        queue = deque()
-        queue.append([start])
-        visited = set([start])
-
-        while queue:
-            path = queue.popleft()
-            x, y = path[-1]
-
-            if (x, y) == goal:
-                return path
-
-            neighbors = self.getNeighbors(x, y)
-
-            for nX, nY in neighbors:
-                if (nX, nY) not in visited:
-                    visited.add((nX, nY))
-                    queue.append(path + [(nX, nY)])
-        return None
 
     # Encontrar los vecinos (Falta validar, se pidió a Chat)
     def getNeighbors(self, x, y):
