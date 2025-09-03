@@ -399,6 +399,25 @@ class FireRescueModel(Model):
                 self.activePois -= 1
 
     def flashover(self):
+        fireChanged = True
+
+        while fireChanged:
+            fireChanged = False
+
+            for x in range(self.width + 2):
+                for y in range(self.height + 2):
+                    fire = self.fires[x][y]
+                    # Recuperar una celda que tenga humo
+                    if fire != 0 and fire.state == "smoke":
+                        # Revisar los vecinos
+                        for nx, ny in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]:
+                            if 0 <= nx < self.width + 2 and 0 <= ny < self.height + 2:
+                                neighbor = self.fires[nx][ny]
+                                if neighbor != 0 and neighbor.state == "fire":
+                                    fire.fire()
+                                    
+                                    fireChanged = True
+                                    break
         pass
 
     # Cuando un firefighter está en knockout, moverlo a la posición de la ambulancia
