@@ -15,8 +15,11 @@ import numpy as np
 import random
 from collections import deque
 
+
 class FireRescueModel(Model):
-    def __init__(self, width = 8, height = 6, noOfAagents = 6, victimsMarkers = 10, board = boardConfig):
+    def __init__(
+        self, width=8, height=6, noOfAagents=6, victimsMarkers=10, board=boardConfig
+    ):
         super().__init__()
 
         # Medidas del grid del edificio
@@ -24,10 +27,10 @@ class FireRescueModel(Model):
         self.height = height
 
         # Nos indica en que ronda está el juego
-        self.round = 0;
+        self.round = 0
 
         # Se le agregan 2 para añadir el exterior
-        self.grid = SingleGrid(width + 2, height + 2, torus = False)
+        self.grid = SingleGrid(width + 2, height + 2, torus=False)
         self.schedule = RandomActivation(self)
 
         self.datacollector = DataCollector(
@@ -35,9 +38,9 @@ class FireRescueModel(Model):
                 "Grid": getGrid,
                 "Steps": lambda model: model.round,
                 "VictimsRescued": lambda model: model.victimsRescued,
-                "VictimsLost": lambda model: model.victimsLost
+                "VictimsLost": lambda model: model.victimsLost,
             },
-            agent_reporters={}
+            agent_reporters={},
         )
 
         # Variables para conocer el estatus del juego
@@ -46,8 +49,8 @@ class FireRescueModel(Model):
         self.damageTokens = 0
 
         # Número de POIs disponibles
-        self.totalVictims = 10;
-        self.totalFalseAlarms = 5;
+        self.totalVictims = 10
+        self.totalFalseAlarms = 5
         # Quitar los iniciales
         for x, y, value in board["POILocations"]:
             if value == 1:
@@ -75,34 +78,35 @@ class FireRescueModel(Model):
 
         # Añadimos los POI iniciales
         self.activePois = 3
-        self.POIs = np.zeros((height + 2, width + 2))
+        self.POIs = np.zeros((height + 2, width + 2), dtype=object)
         for poiData in board["POILocations"]:
             # Creamos el POI en la posición indicada
-            poi = Poi((poiData[0], poiData[1]), poiData[2])
-            self.POIs[poiData] = poi
+            x, y = poiData[0], poiData[1]
+            poi = Poi((x, y), poiData[2])
+            self.POIs[x][y] = poi
 
         # Añadimos los POI iniciales
-        '''self.POIs = []
+        """self.POIs = []
         for poiData in board["POILocations"]:
             # Creamos el agente en la posición indicada
             poi = Poi((poiData[0], poiData[1]), poiData[2])
             self.POIs.append(poi)
-        '''
+        """
 
         # Añadimos el fuego inicial
-        self.fires = np.zeros((height + 2, width + 2))
+        self.fires = np.zeros((height + 2, width + 2), dtype=object)
         for pos in board["fireLocations"]:
             fire = Fire(pos, state="fire")
             self.fires[pos] = fire
 
         # Añadimos el fuego inicial
-        '''self.fires = []
+        """self.fires = []
         # Creamos el agente en la posición indicada
         for pos in board["fireLocations"]:
             fire = Fire(self, pos)
             self.fires.append(fire)
-        '''
-            
+        """
+
         # Creación de los bomberos
         # possiblePositions = np.random.permutation(board["spawnPoints"])
 
@@ -114,40 +118,39 @@ class FireRescueModel(Model):
         for i in range(height):
             possiblePositions.append([0, i])
             possiblePositions.append([width, i])
-        
+
         # Añadir los Firefighters
         for i in range(noOfAagents):
             pos = possiblePositions[i]
             fireFighter = Firefighter(self, pos)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
-        
+
     # Método utilizado para simular el tirado de dados
     def rollDice(self):
         self.dice = (random.randrange(self.width), random.randrange(self.height))
-        
+
     # Método utilizado para avanzar el fuego en el tablero después de cada ronda
     def advanceFire(self):
         self.rollDice()
 
         # Buscamos si ya hay fuego en esa localidad
-        #firesAtPos = [f for f in self.fires if f.pos == self.dice]
+        # firesAtPos = [f for f in self.fires if f.pos == self.dice]
         firesAtPos = self.fires[self.dice]
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
         if firesAtPos == 0:
-            fire = Fire(self.dice, state = "smoke");
+            fire = Fire(self.dice, state="smoke")
             self.fires[self.dice] = fire
-        
+
             # Si había bomberos en la localidad, serán derrotados
             firefighterAtPos = self.grid.get_cell_list_contents([self.dice])
             if firefighterAtPos:
                 self.moveToAmbulance(firefighterAtPos[0])
                 firefighterAtPos[0].knockedDown = True
-            
 
             # Si había POIs en la localidad, serán perdidos
-            #PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
+            # PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
             PoiAtPos = self.POIs[self.dice]
 
             if PoiAtPos != 0:
@@ -167,10 +170,9 @@ class FireRescueModel(Model):
             elif fire.state == "fire":
                 self.explosion(self.dice)
 
-
     # TODO: Añadir lógica para cuando las celdas adyacentes estén fuera del tablero
     def explosion(self, pos):
-  
+
         ### Arriba ###
         upPos = (pos[0], pos[1] + 1)
         upFire = self.fires[upPos]
@@ -190,7 +192,7 @@ class FireRescueModel(Model):
                 if not cell.walls["up"].isDestroyed():
                     cell.walls["up"].addDamage()
                     self.damageTokens += 1
-            
+
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
             if cell.doors["up"]:
@@ -233,7 +235,7 @@ class FireRescueModel(Model):
                 if not cell.walls["down"].isDestroyed():
                     cell.walls["down"].addDamage()
                     self.damageTokens += 1
-            
+
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
             if cell.doors["down"]:
@@ -276,7 +278,7 @@ class FireRescueModel(Model):
                 if not cell.walls["right"].isDestroyed():
                     cell.walls["right"].addDamage()
                     self.damageTokens += 1
-            
+
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
             if cell.doors["right"]:
@@ -319,7 +321,7 @@ class FireRescueModel(Model):
                 if not cell.walls["left"].isDestroyed():
                     cell.walls["left"].addDamage()
                     self.damageTokens += 1
-            
+
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
             if cell.doors["left"]:
@@ -343,15 +345,9 @@ class FireRescueModel(Model):
                 self.POIs[lPos] = 0
                 self.activePois -= 1
 
-
     def shockwave(self, pos, direction):
         # Mapear direcciones a vectores
-        directions = {
-            "up": (0, 1),
-            "down": (0, -1),
-            "right": (1, 0),
-            "left": (-1, 0)
-        }
+        directions = {"up": (0, 1), "down": (0, -1), "right": (1, 0), "left": (-1, 0)}
         dx, dy = directions[direction]
 
         x, y = pos
@@ -421,10 +417,10 @@ class FireRescueModel(Model):
         while queue:
             path = queue.popleft()
             x, y = path[-1]
-            
+
             if (x, y) == goal:
                 return path
-            
+
             neighbors = self.getNeighbors(x, y)
 
             for nX, nY in neighbors:
@@ -432,20 +428,14 @@ class FireRescueModel(Model):
                     visited.add((nX, nY))
                     queue.append(path + [(nX, nY)])
         return None
-    
+
     # Encontrar los vecinos (Falta validar, se pidió a Chat)
     def getNeighbors(self, x, y):
         # Explicar / comentar código
         neighbors = []
-        directions = {
-            "up": (0, -1),
-            "right": (1, 0),
-            "down": (0, 1),
-            "left": (-1, 0)
-        }
+        directions = {"up": (0, -1), "right": (1, 0), "down": (0, 1), "left": (-1, 0)}
 
         currentCell = self.cells[y][x]
-
 
         for dir, (dx, dy) in directions.items():
             nx, ny = x + dx, y + dy
@@ -454,11 +444,14 @@ class FireRescueModel(Model):
                 if currentCell.walls[dir] is not None:
                     continue
                 # Si hay puerta cerrada, no se puede pasar
-                if currentCell.doors[dir] is not None and not currentCell.doors[dir].isOpen:
+                if (
+                    currentCell.doors[dir] is not None
+                    and not currentCell.doors[dir].isOpen
+                ):
                     continue
 
             neighbors.append((nx, ny))
-    
+
         return neighbors
 
     # Añadir la lógica del step
@@ -470,17 +463,17 @@ class FireRescueModel(Model):
             self.replendishPOI()
         self.schedule.step()
         self.advanceFire()
-    
+
     # Verificación de los estatus del juego
     def victory(self):
         return self.victimsRescued >= 7
-    
+
     def defeat(self):
-        return (self.victimsLost >= 4 or self.buildingCollapse())
-    
+        return self.victimsLost >= 4 or self.buildingCollapse()
+
     def buildingCollapse(self):
         return self.damageTokens >= 24
-    
+
     # Añadir los nuevos POI al final de cada ronda
     def replendishPOI(self):
 
@@ -488,7 +481,7 @@ class FireRescueModel(Model):
 
         if newPOIsNeeded == 0:
             return
-        
+
         else:
             for _ in range(newPOIsNeeded):
                 # Tiramos los dados
@@ -518,4 +511,3 @@ class FireRescueModel(Model):
 
                 else:
                     print("Ya no hay POI disponibles")
-        
