@@ -1,10 +1,11 @@
 import numpy as np
 from mesa import Agent, Model
 
+
 class Firefighter(Agent):
     def __init__(self, model, initialPos):
         super().__init__(model)
-        self.pos = initialPos
+        # self.pos = initialPos
         self.actionPoints = 4
         self.carryingVictim = False
         self.knockedDown = False
@@ -20,9 +21,12 @@ class Firefighter(Agent):
     # TODO: Cambiar la lógica del checkFire acorde a la nueva implementación
     def move(self):
         # Movimiento aleatorio a una celda vecina
-        possiblePositions = self.model.grid.get_neighborhood(self.pos, moore = False, include_center = False)
-        options = np.random.permutation(len(possiblePositions))
-        if options:
+        possiblePositions = self.model.grid.get_neighborhood(
+            self.pos, moore=False, include_center=False
+        )
+
+        if len(possiblePositions):
+            options = np.random.permutation(possiblePositions)
             newPos = options[0]
             self.model.grid.move_agent(self, newPos)
             self.pos = newPos
@@ -33,8 +37,9 @@ class Firefighter(Agent):
     # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
         # Revisar si hay un POI en la posición del bombero
-        #poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
+        # poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
         poiAtPos = self.model.POIs[self.pos]
+        print(poiAtPos)
 
         if poiAtPos != 0:
             poiAtPos.reveal()
@@ -49,7 +54,7 @@ class Firefighter(Agent):
     # Revisar si en la posición dada hay fuego
     def checkFire(self, position, fireState):
         # Revisar si hay fuego en la posición del bombero
-        #fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
+        # fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
         fireAtPos = self.model.POIs[position]
 
         if fireAtPos != 0:
@@ -63,7 +68,7 @@ class Firefighter(Agent):
     def extinguishFire(self, position, action):
 
         # Rescatamos el fuego en la posición
-        #fireAtPos = [f for f in self.model.fires if f.pos == position]
+        # fireAtPos = [f for f in self.model.fires if f.pos == position]
         fire = self.model.POIs[position]
 
         # Si no hay fuego no hacemos nada
@@ -107,7 +112,7 @@ class Firefighter(Agent):
             # Verificamos que no esté destruida
             if wall.isDestroyed():
                 return
-            
+
             # Añadimos el daño a la pared
             wall.addDamage()
             # Agregamos el daño al contador del modelo
@@ -119,4 +124,3 @@ class Firefighter(Agent):
                 door.destroy()
 
             self.actionPoints -= 2
-            

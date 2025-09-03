@@ -112,12 +112,12 @@ class FireRescueModel(Model):
 
         possiblePositions = []
         for i in range(width):
-            possiblePositions.append([i, 0])
-            possiblePositions.append([i, height])
+            possiblePositions.append((i, 0))
+            possiblePositions.append((i, height))
 
         for i in range(height):
-            possiblePositions.append([0, i])
-            possiblePositions.append([width, i])
+            possiblePositions.append((0, i))
+            possiblePositions.append((width, i))
 
         # Añadir los Firefighters
         for i in range(noOfAagents):
