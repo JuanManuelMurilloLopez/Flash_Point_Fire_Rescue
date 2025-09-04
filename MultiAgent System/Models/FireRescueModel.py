@@ -29,6 +29,10 @@ class FireRescueModel(Model):
         # Nos indica en que ronda está el juego
         self.round = 0
 
+        # Variables para guardar los cambios en fuegos y POIs durante las rondas
+        self.newFires = []
+        self.changedPOI = []
+
         # Se le agregan 2 para añadir el exterior
         self.grid = SingleGrid(width + 2, height + 2, torus=False)
         self.schedule = RandomActivation(self)
@@ -39,8 +43,13 @@ class FireRescueModel(Model):
                 "Steps": lambda model: model.round,
                 "VictimsRescued": lambda model: model.victimsRescued,
                 "VictimsLost": lambda model: model.victimsLost,
+                "NewFire" : lambda model : model.newFires,
+                "Dices" : lambda model : {"red": model.dice[0], "black": model.dice[1]},
+                "DamageTokens" : lambda model: model.damageTokens,
+                "ChangedPOIs" : lambda model : model.changedPOI
+
             },
-            agent_reporters={},
+            agent_reporters={"Position" : lambda fireFighter : fireFighter.pos}
         )
 
         # Variables para conocer el estatus del juego
@@ -140,9 +149,10 @@ class FireRescueModel(Model):
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
         if firesAtPos == 0:
-            fire = Fire(self.dice, state="smoke")
+            fire = Fire(self.dice, state = "smoke")
             self.fires[self.dice] = fire
-
+            self.newFires.append({"position": self.dice, "state": fire.state})
+        
             # Si había bomberos en la localidad, serán derrotados
             firefighterAtPos = self.grid.get_cell_list_contents([self.dice])
             if firefighterAtPos:
@@ -156,16 +166,19 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                self.changedPOI.append({"position": self.dice, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[self.pos] = 0
                 self.activePois -= 1
+
 
         else:
             fire = firesAtPos
             # Si es humo, lo hacemos fuego
             if fire.state == "smoke":
                 fire.fire()
+                # TODO Aquí se agrega un nuevo cambio a la lista de fuegos nuevos? Cómo se maneja en las explosiones
 
             # Si es fuego, creamos una explosión
             elif fire.state == "fire":
@@ -185,6 +198,7 @@ class FireRescueModel(Model):
             # Si no había fuego, añadirlo
             upFire = Fire(upPos)
             self.fires[upPos] = upFire
+            self.newFires.append({"position": upPos, "state": upFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
@@ -212,6 +226,7 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                self.changedPOI.append({"position": upPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[upPos] = 0
@@ -228,6 +243,7 @@ class FireRescueModel(Model):
             # Si no había fuego, añadirlo
             downFire = Fire(downPos)
             self.fires[downPos] = downFire
+            self.newFires.append({"position": downPos, "state": downFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
@@ -255,6 +271,7 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                self.changedPOI.append({"position": downPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[downPos] = 0
@@ -271,6 +288,7 @@ class FireRescueModel(Model):
             # Si no había fuego, añadirlo
             rFire = Fire(rPos)
             self.fires[rPos] = rFire
+            self.newFires.append({"position": rPos, "state": rFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
@@ -298,6 +316,7 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                self.changedPOI.append({"position": rPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[rPos] = 0
@@ -314,6 +333,7 @@ class FireRescueModel(Model):
             # Si no había fuego, añadirlo
             lFire = Fire(lPos)
             self.fires[lPos] = lFire
+            self.newFires.append({"position": lPos, "state": lFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
             # Revisar si había una pared
@@ -341,6 +361,7 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                self.changedPOI.append({"position": lPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[lPos] = 0
@@ -480,7 +501,7 @@ class FireRescueModel(Model):
         self.dice = (random.randrange(self.width), random.randrange(self.height))
         if self.round != 0:
             self.advanceFire()
-            self.replendishPOI()
+            self.replenishPOI()
         self.schedule.step()
         self.advanceFire()
 
@@ -495,7 +516,7 @@ class FireRescueModel(Model):
         return self.damageTokens >= 24
 
     # Añadir los nuevos POI al final de cada ronda
-    def replendishPOI(self):
+    def replenishPOI(self):
 
         newPOIsNeeded = 3 - self.activePois
 
