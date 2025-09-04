@@ -39,7 +39,7 @@ class FireRescueModel(Model):
 
         self.datacollector = DataCollector(
             model_reporters={
-                "Grid": getGrid,
+                #"Grid": getGrid,
                 "Steps": lambda model: model.round,
                 "VictimsRescued": lambda model: model.victimsRescued,
                 "VictimsLost": lambda model: model.victimsLost,
