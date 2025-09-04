@@ -531,18 +531,13 @@ class FireRescueModel(Model):
     # Añadir la lógica del step
     def step(self):
         # Simular los dados
-        print("Step")
         self.dice = (random.randrange(self.width), random.randrange(self.height))
-        print("dices")
         if self.round != 0:
             self.advanceFire()
-            print("Advance fire")
             self.replenishPOI()
-            print("Replenish POI")
         self.schedule.step()
-        print("Scheduler")
+        self.datacollector.collect(self)
         self.advanceFire()
-        print("Advance fire 2")
 
     # Verificación de los estatus del juego
     def victory(self):
