@@ -173,7 +173,6 @@ class FireRescueModel(Model):
 
     # TODO: Añadir lógica para cuando las celdas adyacentes estén fuera del tablero
     def explosion(self, pos):
-
         ### Arriba ###
         upPos = (pos[0], pos[1] + 1)
         upFire = self.fires[upPos]
@@ -352,12 +351,13 @@ class FireRescueModel(Model):
         dx, dy = directions[direction]
 
         x, y = pos
+
         while True:
             x += dx
             y += dy
 
             # Detener si salimos del tablero
-            if not (0 <= x < self.width + 2 and 0 <= y < self.height + 2):
+            if not (0 <= x < self.width and 0 <= y < self.height):
                 break
 
             pos = (x, y)
@@ -416,7 +416,7 @@ class FireRescueModel(Model):
                                 neighbor = self.fires[nx][ny]
                                 if neighbor != 0 and neighbor.state == "fire":
                                     fire.fire()
-                                    
+
                                     fireChanged = True
                                     break
         pass
@@ -424,7 +424,8 @@ class FireRescueModel(Model):
     # Cuando un firefighter está en knockout, moverlo a la posición de la ambulancia
     def moveToAmbulance(self, firefighter):
         self.grid.remove_agent(firefighter)
-        self.grid.place_agent(firefighter, self.ambulancePos)
+        option = np.random.permutation(len(self.ambulancePos))
+        self.grid.place_agent(firefighter, self.ambulancePos[option])
         firefighter.pos = self.ambulancePos
         firefighter.knockedDown = False
 

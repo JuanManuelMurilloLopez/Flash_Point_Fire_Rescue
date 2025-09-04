@@ -43,7 +43,7 @@ class Firefighter(Agent):
         # Revisar si hay un POI en la posición del bombero
         # poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
         x, y = self.pos
-        poiAtPos = self.model.POIs[x][y]
+        poiAtPos = self.model.POIs[y][x]
 
         if poiAtPos != 0:
             poiAtPos.reveal()
@@ -60,7 +60,7 @@ class Firefighter(Agent):
         # Revisar si hay fuego en la posición del bombero
         # fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
         x, y = self.pos
-        fireAtPos = self.model.fires[x][y]
+        fireAtPos = self.model.fires[y][x]
 
         if fireAtPos != 0:
             if fireAtPos.state == "fire":
