@@ -43,13 +43,12 @@ class FireRescueModel(Model):
                 "Steps": lambda model: model.round,
                 "VictimsRescued": lambda model: model.victimsRescued,
                 "VictimsLost": lambda model: model.victimsLost,
-                "NewFire" : lambda model : model.newFires,
-                "Dices" : lambda model : {"red": model.dice[0], "black": model.dice[1]},
-                "DamageTokens" : lambda model: model.damageTokens,
-                "ChangedPOIs" : lambda model : model.changedPOI
-
+                "NewFire": lambda model: model.newFires,
+                "Dices": lambda model: {"red": model.dice[0], "black": model.dice[1]},
+                "DamageTokens": lambda model: model.damageTokens,
+                "ChangedPOIs": lambda model: model.changedPOI,
             },
-            agent_reporters={"Position" : lambda fireFighter : fireFighter.pos}
+            agent_reporters={"Position": lambda fireFighter: fireFighter.pos},
         )
 
         # Variables para conocer el estatus del juego
@@ -149,10 +148,10 @@ class FireRescueModel(Model):
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
         if firesAtPos == 0:
-            fire = Fire(self.dice, state = "smoke")
+            fire = Fire(self.dice, state="smoke")
             self.fires[self.dice[1], self.dice[0]] = fire
             self.newFires.append({"position": self.dice, "state": fire.state})
-        
+
             # Si había bomberos en la localidad, serán derrotados
             firefighterAtPos = self.grid.get_cell_list_contents([self.dice])
             if firefighterAtPos:
@@ -166,12 +165,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
-                self.changedPOI.append({"position": self.dice, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
+                self.changedPOI.append(
+                    {
+                        "position": self.dice,
+                        "Rescued": PoiAtPos.rescued,
+                        "Victim": PoiAtPos.victim,
+                    }
+                )
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[self.pos[1], self.pos[0]] = 0
+                self.POIs[self.dice[1], self.dice[0]] = 0
                 self.activePois -= 1
-
 
         else:
             fire = firesAtPos
@@ -225,7 +229,13 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
-                self.changedPOI.append({"position": upPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
+                self.changedPOI.append(
+                    {
+                        "position": upPos,
+                        "Rescued": PoiAtPos.rescued,
+                        "Victim": PoiAtPos.victim,
+                    }
+                )
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[upPos[1], upPos[0]] = 0
@@ -270,7 +280,13 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
-                self.changedPOI.append({"position": downPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
+                self.changedPOI.append(
+                    {
+                        "position": downPos,
+                        "Rescued": PoiAtPos.rescued,
+                        "Victim": PoiAtPos.victim,
+                    }
+                )
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[downPos[1], downPos[0]] = 0
@@ -315,7 +331,13 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
-                self.changedPOI.append({"position": rPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
+                self.changedPOI.append(
+                    {
+                        "position": rPos,
+                        "Rescued": PoiAtPos.rescued,
+                        "Victim": PoiAtPos.victim,
+                    }
+                )
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[rPos[1], rPos[0]] = 0
@@ -360,7 +382,13 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
-                self.changedPOI.append({"position": lPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
+                self.changedPOI.append(
+                    {
+                        "position": lPos,
+                        "Rescued": PoiAtPos.rescued,
+                        "Victim": PoiAtPos.victim,
+                    }
+                )
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[lPos[1], lPos[0]] = 0
@@ -446,8 +474,12 @@ class FireRescueModel(Model):
     def moveToAmbulance(self, firefighter):
         self.grid.remove_agent(firefighter)
         option = np.random.permutation(len(self.ambulancePos))
-        self.grid.place_agent(firefighter, self.ambulancePos[option])
-        firefighter.pos = self.ambulancePos
+        for i in option:
+            x, y = self.ambulancePos[i]
+            if self.grid.is_cell_empty((x, y)):
+                self.grid.place_agent(firefighter, (x, y))
+                break
+        # firefighter.pos = self.ambulancePos
         firefighter.knockedDown = False
 
     # BFS para sacar a las víctimas
@@ -499,12 +531,18 @@ class FireRescueModel(Model):
     # Añadir la lógica del step
     def step(self):
         # Simular los dados
+        print("Step")
         self.dice = (random.randrange(self.width), random.randrange(self.height))
+        print("dices")
         if self.round != 0:
             self.advanceFire()
+            print("Advance fire")
             self.replenishPOI()
+            print("Replenish POI")
         self.schedule.step()
+        print("Scheduler")
         self.advanceFire()
+        print("Advance fire 2")
 
     # Verificación de los estatus del juego
     def victory(self):
