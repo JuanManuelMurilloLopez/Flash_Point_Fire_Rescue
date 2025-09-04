@@ -92,7 +92,7 @@ class FireRescueModel(Model):
             # Creamos el POI en la posición indicada
             x, y = poiData[0], poiData[1]
             poi = Poi((x, y), poiData[2])
-            self.POIs[x][y] = poi
+            self.POIs[y][x] = poi
 
         # Añadimos los POI iniciales
         """self.POIs = []
@@ -106,7 +106,7 @@ class FireRescueModel(Model):
         self.fires = np.zeros((height + 2, width + 2), dtype=object)
         for pos in board["fireLocations"]:
             fire = Fire(pos, state="fire")
-            self.fires[pos] = fire
+            self.fires[pos[1]][pos[0]] = fire
 
         # Añadimos el fuego inicial
         """self.fires = []
@@ -145,12 +145,12 @@ class FireRescueModel(Model):
 
         # Buscamos si ya hay fuego en esa localidad
         # firesAtPos = [f for f in self.fires if f.pos == self.dice]
-        firesAtPos = self.fires[self.dice]
+        firesAtPos = self.fires[self.dice[1], self.dice[0]]
 
         # Si no hay fuego en esa localidad, se coloca un nuevo marcador como smoke
         if firesAtPos == 0:
             fire = Fire(self.dice, state = "smoke")
-            self.fires[self.dice] = fire
+            self.fires[self.dice[1], self.dice[0]] = fire
             self.newFires.append({"position": self.dice, "state": fire.state})
         
             # Si había bomberos en la localidad, serán derrotados
@@ -161,7 +161,7 @@ class FireRescueModel(Model):
 
             # Si había POIs en la localidad, serán perdidos
             # PoiAtPos = [p for p in self.POIs if p.pos == self.dice]
-            PoiAtPos = self.POIs[self.dice]
+            PoiAtPos = self.POIs[self.dice[1], self.dice[0]]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
@@ -169,7 +169,7 @@ class FireRescueModel(Model):
                 self.changedPOI.append({"position": self.dice, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[self.pos] = 0
+                self.POIs[self.pos[1], self.pos[0]] = 0
                 self.activePois -= 1
 
 
@@ -189,7 +189,7 @@ class FireRescueModel(Model):
 
         ### Arriba ###
         upPos = (pos[0], pos[1] + 1)
-        upFire = self.fires[upPos]
+        upFire = self.fires[upPos[1], upPos[0]]
         if upFire != 0:
             # Si ya había fuego, empezar shockwave
             if upFire.state == "fire":
@@ -197,7 +197,7 @@ class FireRescueModel(Model):
         else:
             # Si no había fuego, añadirlo
             upFire = Fire(upPos)
-            self.fires[upPos] = upFire
+            self.fires[upPos[1], upPos[0]] = upFire
             self.newFires.append({"position": upPos, "state": upFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
@@ -221,7 +221,7 @@ class FireRescueModel(Model):
                 firefighterAtPos[0].knockedDown = True
 
             # Si había POIs en la localidad, serán perdidos
-            PoiAtPos = self.POIs[upPos]
+            PoiAtPos = self.POIs[upPos[1], upPos[0]]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
@@ -229,12 +229,12 @@ class FireRescueModel(Model):
                 self.changedPOI.append({"position": upPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[upPos] = 0
+                self.POIs[upPos[1], upPos[0]] = 0
                 self.activePois -= 1
 
         ### Abajo ###
         downPos = (pos[0], pos[1] - 1)
-        downFire = self.fires[downPos]
+        downFire = self.fires[downPos[1], downPos[0]]
         if downFire != 0:
             # Si ya había fuego, empezar shockwave
             if downFire.state == "fire":
@@ -242,7 +242,7 @@ class FireRescueModel(Model):
         else:
             # Si no había fuego, añadirlo
             downFire = Fire(downPos)
-            self.fires[downPos] = downFire
+            self.fires[downPos[1], downPos[0]] = downFire
             self.newFires.append({"position": downPos, "state": downFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
@@ -266,7 +266,7 @@ class FireRescueModel(Model):
                 firefighterAtPos[0].knockedDown = True
 
             # Si había POIs en la localidad, serán perdidos
-            PoiAtPos = self.POIs[downPos]
+            PoiAtPos = self.POIs[downPos[1], downPos[0]]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
@@ -274,12 +274,12 @@ class FireRescueModel(Model):
                 self.changedPOI.append({"position": downPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[downPos] = 0
+                self.POIs[downPos[1], downPos[0]] = 0
                 self.activePois -= 1
 
         ### Derecha ###
         rPos = (pos[0] + 1, pos[1])
-        rFire = self.fires[rPos]
+        rFire = self.fires[rPos[1], rPos[0]]
         if rFire != 0:
             # Si ya había fuego, empezar shockwave
             if rFire.state == "fire":
@@ -287,7 +287,7 @@ class FireRescueModel(Model):
         else:
             # Si no había fuego, añadirlo
             rFire = Fire(rPos)
-            self.fires[rPos] = rFire
+            self.fires[rPos[1], rPos[0]] = rFire
             self.newFires.append({"position": rPos, "state": rFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
@@ -311,7 +311,7 @@ class FireRescueModel(Model):
                 firefighterAtPos[0].knockedDown = True
 
             # Si había POIs en la localidad, serán perdidos
-            PoiAtPos = self.POIs[rPos]
+            PoiAtPos = self.POIs[rPos[1], rPos[0]]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
@@ -319,12 +319,12 @@ class FireRescueModel(Model):
                 self.changedPOI.append({"position": rPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[rPos] = 0
+                self.POIs[rPos[1], rPos[0]] = 0
                 self.activePois -= 1
 
         ### Izquierda ###
         lPos = (pos[0] - 1, pos[1])
-        lFire = self.fires[lPos]
+        lFire = self.fires[lPos[1], lPos[0]]
         if lFire != 0:
             # Si ya había fuego, empezar shockwave
             if lFire.state == "fire":
@@ -332,7 +332,7 @@ class FireRescueModel(Model):
         else:
             # Si no había fuego, añadirlo
             lFire = Fire(lPos)
-            self.fires[lPos] = lFire
+            self.fires[lPos[1], lPos[0]] = lFire
             self.newFires.append({"position": lPos, "state": lFire.state})
 
             cell = self.cells[pos[1]][pos[0]]
@@ -356,7 +356,7 @@ class FireRescueModel(Model):
                 firefighterAtPos[0].knockedDown = True
 
             # Si había POIs en la localidad, serán perdidos
-            PoiAtPos = self.POIs[lPos]
+            PoiAtPos = self.POIs[lPos[1], lPos[0]]
 
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
@@ -364,7 +364,7 @@ class FireRescueModel(Model):
                 self.changedPOI.append({"position": lPos, "Rescued": PoiAtPos.rescued, "Victim": PoiAtPos.victim})
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
-                self.POIs[lPos] = 0
+                self.POIs[lPos[1], lPos[0]] = 0
                 self.activePois -= 1
 
     def shockwave(self, pos, direction):
@@ -378,7 +378,7 @@ class FireRescueModel(Model):
             y += dy
 
             # Detener si salimos del tablero
-            if not (0 <= x < self.width + 2 and 0 <= y < self.height + 2):
+            if not (0 <= x < self.width and 0 <= y < self.height):
                 break
 
             pos = (x, y)
@@ -428,13 +428,13 @@ class FireRescueModel(Model):
 
             for x in range(self.width + 2):
                 for y in range(self.height + 2):
-                    fire = self.fires[x][y]
+                    fire = self.fires[y, x]
                     # Recuperar una celda que tenga humo
                     if fire != 0 and fire.state == "smoke":
                         # Revisar los vecinos
                         for nx, ny in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]:
                             if 0 <= nx < self.width + 2 and 0 <= ny < self.height + 2:
-                                neighbor = self.fires[nx][ny]
+                                neighbor = self.fires[ny, nx]
                                 if neighbor != 0 and neighbor.state == "fire":
                                     fire.fire()
                                     
@@ -538,17 +538,17 @@ class FireRescueModel(Model):
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:
                     victim = np.random.randint(0, 2)
                     poi = Poi(self.dice, victim)
-                    self.POIs[self.dice] = poi
+                    self.POIs[self.dice[1], self.dice[0]] = poi
 
                 # Si solo hay víctimas, se inicializa como víctima
                 elif self.totalVictims > 0:
                     poi = Poi(self.dice, 1)
-                    self.POIs[self.dice] = poi
+                    self.POIs[self.dice[1], self.dice[0]] = poi
 
                 # Si solo hay falsas alarmas, se inicializa como falsa alarma
                 elif self.totalFalseAlarms > 0:
                     poi = Poi(self.dice, 0)
-                    self.POIs[self.dice] = poi
+                    self.POIs[self.dice[1], self.dice[0]] = poi
 
                 else:
                     print("Ya no hay POI disponibles")
