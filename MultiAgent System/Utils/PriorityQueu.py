@@ -17,3 +17,6 @@ class PriorityQueue:
     def top(self):
         if self.queue:
             return self.queue[0]
+
+    def empty(self):
+        return not self.queue

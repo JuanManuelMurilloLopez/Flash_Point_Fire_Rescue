@@ -5,23 +5,31 @@ from Utils.PriorityQueu import PriorityQueue
 
 
 class Firefighter(Agent):
-    def __init__(self, model, initialPos):
+    def __init__(self, model, strategy):
         super().__init__(model)
         self.maxActionPoints = 8
         self.actionPoints = 4
         self.carryingVictim = False
         self.knockedDown = False
+        self.strategy = strategy
 
     # TODO: Terminar lógica del step
     def step(self):
+        if self.strategy == "random":
+            self.randomStrategy()
+        else:
+            self.intelligentStrategy()
+
+    def randomStrategy(self):
         while self.actionPoints > 0:
             self.move()
-
             self.actionPoints -= 1
 
         self.actionPoints = min(self.actionPoints + 4, self.maxActionPoints)
 
-    # TODO: Cambiar la lógica del checkFire acorde a la nueva implementación
+    def intelligentStrategy(self):
+        self.searchForPOIs()
+
     def move(self):
         # Movimiento aleatorio a una celda vecina
         possiblePositions = self.model.grid.get_neighborhood(
@@ -39,6 +47,23 @@ class Firefighter(Agent):
                     self.checkPOI()
                     self.checkFire()
                     break
+
+    def searchForPOIs(self):
+        self.chooseEntry()
+        poiPosition = self.selectPOI()
+        print(poiPosition)
+        safeDistance, safeRoute = self.safeRoute(poiPosition)
+        quickDistance, quickRoute = self.quickRoute(poiPosition)
+
+        print(safeDistance, safeRoute)
+        print(quickDistance, quickRoute)
+        # if quickDistance >= safeDistance / 3:
+        #     damage = self.damage(quickRoute)
+        #     if self.model.damageTokens + damage <= 12:
+        #         self.strategy = quickRoute
+        #         return
+
+        # self.strategy = safeRoute
 
     # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
@@ -103,8 +128,8 @@ class Firefighter(Agent):
         else:
             return
 
+    # TODO: Lógica para llevar la víctima a la salida
     def saveVictim(self):
-        # TODO: Lógica para llevar la víctima a la salida
         pass
 
     def chopWall(self, orientation):
@@ -132,74 +157,70 @@ class Firefighter(Agent):
 
             self.actionPoints -= 2
 
-    def searchForPOIs(self):
-        self.chooseEntry()
-        poiPosition = self.selectPOI()
-        safeDistance, safeRoute = self.safeRoute(poiPosition)
-        quickDistance, quickRoute = self.shortRoute(poiPosition)
-
-        print(safeDistance, safeRoute)
-        print(quickDistance, quickRoute)
-        # if quickDistance >= safeDistance / 3:
-        #     damage = self.damage(quickRoute)
-        #     if self.model.damageTokens + damage <= 12:
-        #         self.strategy = quickRoute
-        #         return
-
-        # self.strategy = safeRoute
-
     def chooseEntry(self):
-        entrance = np.random.randint(len(self.model.entrances))
-        self.model.grid.move_agent(self.model.entrances[entrance])
+        entrances = self.model.entrances
+        option = np.random.permutation(len(entrances))
+        for i in option:
+            if self.model.grid.is_cell_empty(entrances[i]):
+                self.model.grid.move_agent(self, entrances[i])
+                break
 
-    # A* para conseguir la ruta más corta al POI más cercano por el camino abierto
+    # Selecciona el primer POI disponible desde la entrada que no haya elegido
+    # otro agente
     def selectPOI(self):
-        cells = self.model.cells
+        cells = self.model.POIs
 
         POIfound = False
 
         queue = deque()
         queue.append(self.pos)
-        visited = set(self.pos)
+        visited = set({self.pos})
 
         while not POIfound:
-            path = queue.popleft()
-            x, y = path[-1]
+            if not queue:
+                print("No more POIs to be found")
+                print(self.model.POIsFound)
+                break
 
-            if cells[x][y].poi and (x, y) not in self.model.POIsFound:
+            path = queue.popleft()
+            x, y = path
+
+            if cells[y][x] and (x, y) not in self.model.POIsFound:
                 POIfound = True
                 self.model.POIsFound.add((x, y))
                 return (x, y)
 
-            neighbors = self.model.getNeighbors(x, y)
+            neighbors = self.model.search(x, y)
 
             for nX, nY in neighbors:
-                if (nX, nY) not in visited:
+                if (nX, nY) not in visited and self.__isValid(cells, (nX, nY)):
                     visited.add((nX, nY))
-                    queue.append(path + [(nX, nY)])
+                    queue.append((nX, nY))
 
     def heuristics(src, dest):
         return (abs(src[0] - dest[0]) + abs(src[0] - dest[0])) * 5
 
     def safeRoute(self, destination):
-        n = self.model.width * self.model.height
+        n = (self.model.width + 2) * (self.model.height + 2)
+        x, y = self.pos
         dist = np.zeros(n)
-        dist[self.toInt(x, y)] = 0
+        dist[self.__toInt(x, y)] = 0
         prev = [None] * n
 
         pq = PriorityQueue()
 
         pq.push(0, self.pos)
-        x, y = self.pos
 
         while not pq.empty():
             _, u = pq.top()
             pq.pop()
 
+            x, y = u
+
             if u == destination:
                 break
 
-            for nX, nY in self.model.getNeighbors(u):
+            for nX, nY in self.model.getNeighbors(x, y):
                 newDistance = dist[self.__toInt(x, y)] + 1
 
                 if newDistance < dist[self.__toInt(x, y)]:
@@ -211,7 +232,7 @@ class Firefighter(Agent):
         path = []
         u = destination
         x, y = destination
-        if prev[self.__toInt(x, y)] is not None or u == self.destination:
+        if prev[self.__toInt(x, y)] is not None or u == destination:
             while u is not None:
                 path.insert(0, u)
                 u = prev[self.__toInt(x, y)]
@@ -220,8 +241,9 @@ class Firefighter(Agent):
 
     def quickRoute(self, destination):
         n = self.model.width * self.model.height
+        x, y = self.pos
         dist = np.zeros(n)
-        dist[self.toInt(x, y)] = 0
+        dist[self.__toInt(x, y)] = 0
         prev = [None] * n
 
         cells = self.model.cells
@@ -240,7 +262,7 @@ class Firefighter(Agent):
                 break
 
             for nX, nY in self.__getNeighborhood(cells, u):
-                newDistance = dist[self.__toInt(x, y)] + cells[nX][nY]
+                newDistance = dist[self.__toInt(x, y)] + 1
 
                 if newDistance < dist[self.__toInt(x, y)]:
                     dist[self.__toInt(nX, nY)] = newDistance
@@ -251,7 +273,7 @@ class Firefighter(Agent):
         path = []
         u = destination
         x, y = destination
-        if prev[self.__toInt(x, y)] is not None or u == self.destination:
+        if prev[self.__toInt(x, y)] is not None or u == destination:
             while u is not None:
                 path.insert(0, u)
                 u = prev[self.__toInt(x, y)]
@@ -259,12 +281,12 @@ class Firefighter(Agent):
         return dist[self.__toInt(x, y)], path
 
     def __toInt(self, x, y):
-        return x * self.model.height + y
+        return x * (self.model.height + 2) + y
 
-    def __isValid(matrix, position):
+    def __isValid(self, matrix, position):
         (row, col) = position
-        rows = len(matrix)
-        cols = len(matrix[0])
+        rows = len(matrix[0])
+        cols = len(matrix)
         return 0 <= row < rows and 0 <= col < cols
 
     def __getNeighborhood(self, matrix, position):

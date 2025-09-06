@@ -101,7 +101,7 @@ cells = [
 ]
 
 # [x, y, victim/falseAlarm]
-POILocations = [[2, 4, 1], [5, 1, 0], [8, 5, 1]]
+POILocations = [[2, 4, 1], [5, 1, 0], [7, 5, 1]]
 
 # [x, y]
 fireLocations = [
@@ -130,7 +130,7 @@ doorLocations = [
 ]
 
 # [x, y]
-accessPoints = [[1, 6], [3, 1], [4, 8], [6, 3]]
+accessPoints = [[0, 3], [2, 5], [5, 0], [7, 3]]
 
 # Añadir los puntos en los que pueden aparecer los bomberos
 spawnPoints = []

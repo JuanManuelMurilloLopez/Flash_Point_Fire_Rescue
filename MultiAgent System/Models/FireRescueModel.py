@@ -19,7 +19,13 @@ from Utils.PriorityQueu import PriorityQueue
 
 class FireRescueModel(Model):
     def __init__(
-        self, width=8, height=6, noOfAagents=6, victimsMarkers=10, board=boardConfig
+        self,
+        width=8,
+        height=6,
+        noOfAagents=6,
+        victimsMarkers=10,
+        board=boardConfig,
+        strategy="random",
     ):
         super().__init__()
 
@@ -37,6 +43,8 @@ class FireRescueModel(Model):
         # Se le agregan 2 para añadir el exterior
         self.grid = SingleGrid(width + 2, height + 2, torus=False)
         self.schedule = RandomActivation(self)
+
+        self.strategy = strategy
 
         self.datacollector = DataCollector(
             model_reporters={
@@ -82,8 +90,7 @@ class FireRescueModel(Model):
         self.entrances = []
         # Añadir las entradas
         for x, y in board["accessPoints"]:
-            print(x, y)
-            self.cells[x][y].isAccessPoint = True
+            self.cells[y][x].isAccessPoint = True
             self.entrances.append((x, y))
 
         # Información del tablero
@@ -100,6 +107,8 @@ class FireRescueModel(Model):
             x, y = poiData[0], poiData[1]
             poi = Poi((x, y), poiData[2])
             self.POIs[y][x] = poi
+
+        self.POIsFound = set()
 
         # Añadimos los POI iniciales
         """self.POIs = []
@@ -139,7 +148,7 @@ class FireRescueModel(Model):
         # Añadir los Firefighters
         for i in range(noOfAagents):
             pos = possiblePositions[i]
-            fireFighter = Firefighter(self, pos)
+            fireFighter = Firefighter(self, self.strategy)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
 
@@ -534,6 +543,17 @@ class FireRescueModel(Model):
                     continue
 
             neighbors.append((nx, ny))
+
+        return neighbors
+
+    def search(self, x, y):
+        neighbors = []
+        directions = {"up": (0, -1), "right": (1, 0), "down": (0, 1), "left": (-1, 0)}
+
+        for dir, (dx, dy) in directions.items():
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < self.width and 0 <= ny < self.height:
+                neighbors.append((nx, ny))
 
         return neighbors
 
