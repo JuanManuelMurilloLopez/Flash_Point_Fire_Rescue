@@ -79,9 +79,9 @@ class FireRescueModel(Model):
         self.dice = [0, 0]
 
         self.cells = []
-        for y in range(self.height):
+        for y in range(self.height + 2):
             row = []
-            for x in range(self.width):
+            for x in range(self.width + 2):
                 wallLayout = board["cells"][y][x]
                 cell = Cell([x, y], wallLayout, board["doorLocations"])
                 row.append(cell)
@@ -527,7 +527,13 @@ class FireRescueModel(Model):
         neighbors = []
         directions = {"up": (0, -1), "right": (1, 0), "down": (0, 1), "left": (-1, 0)}
 
-        currentCell = self.cells[y][x]
+        try:
+            currentCell = self.cells[y][x]
+        except:
+            raise Exception(
+                f"Error coordinates out of range: {x}x, {y}y \n\
+                    Matrix size = {len(self.cells), len(self.cells[0])}"
+            )
 
         for dir, (dx, dy) in directions.items():
             nx, ny = x + dx, y + dy
@@ -542,7 +548,7 @@ class FireRescueModel(Model):
                 ):
                     continue
 
-            neighbors.append((nx, ny))
+                neighbors.append((nx, ny))
 
         return neighbors
 

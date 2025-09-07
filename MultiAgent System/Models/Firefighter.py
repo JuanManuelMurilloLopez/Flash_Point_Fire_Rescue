@@ -3,6 +3,8 @@ from mesa import Agent, Model
 from collections import deque
 from Utils.PriorityQueu import PriorityQueue
 
+INFINITE = 1_000_000
+
 
 class Firefighter(Agent):
     def __init__(self, model, strategy):
@@ -51,7 +53,9 @@ class Firefighter(Agent):
     def searchForPOIs(self):
         self.chooseEntry()
         poiPosition = self.selectPOI()
-        print(poiPosition)
+        if not poiPosition:
+            return
+        # print(poiPosition)
         safeDistance, safeRoute = self.safeRoute(poiPosition)
         quickDistance, quickRoute = self.quickRoute(poiPosition)
 
@@ -180,7 +184,7 @@ class Firefighter(Agent):
             if not queue:
                 print("No more POIs to be found")
                 print(self.model.POIsFound)
-                break
+                return False
 
             path = queue.popleft()
             x, y = path
@@ -197,91 +201,133 @@ class Firefighter(Agent):
                     visited.add((nX, nY))
                     queue.append((nX, nY))
 
-    def heuristics(src, dest):
-        return (abs(src[0] - dest[0]) + abs(src[0] - dest[0])) * 5
-
     def safeRoute(self, destination):
         n = (self.model.width + 2) * (self.model.height + 2)
-        x, y = self.pos
-        dist = np.zeros(n)
-        dist[self.__toInt(x, y)] = 0
+        dist = [INFINITE] * n
         prev = [None] * n
+        dist[self.__toInt(self.pos)] = 0
 
         pq = PriorityQueue()
 
         pq.push(0, self.pos)
 
         while not pq.empty():
-            _, u = pq.top()
+            _, currentPos = pq.top()
             pq.pop()
 
-            x, y = u
-
-            if u == destination:
+            if currentPos == destination:
                 break
 
-            for nX, nY in self.model.getNeighbors(x, y):
-                newDistance = dist[self.__toInt(x, y)] + 1
-
-                if newDistance < dist[self.__toInt(x, y)]:
-                    dist[self.__toInt(nX, nY)] = newDistance
-                    prev[self.__toInt(x, y)] = u
-                    priority = newDistance + self.heuristics((nX, nY), destination)
-                    pq.push(priority, (nX, nY))
+            # Costo acumulativo de la celda actual y moverse a la siguiente
+            # celda
+            x, y = currentPos
+            for neighborPos in self.model.getNeighbors(x, y):
+                newDistance = dist[self.__toInt(currentPos)] + 1
+                if newDistance < dist[self.__toInt(neighborPos)]:
+                    dist[self.__toInt(neighborPos)] = newDistance
+                    prev[self.__toInt(neighborPos)] = currentPos
+                    priority = newDistance + self.__heuristics(
+                        (neighborPos), destination
+                    )
+                    pq.push(priority, (neighborPos))
 
         path = []
         u = destination
-        x, y = destination
-        if prev[self.__toInt(x, y)] is not None or u == destination:
+        if prev[self.__toInt(u)] is not None or u == destination:
             while u is not None:
                 path.insert(0, u)
-                u = prev[self.__toInt(x, y)]
+                u = prev[self.__toInt(u)]
 
-        return dist[self.__toInt(x, y)], path
+        return dist[self.__toInt(destination)], path
 
     def quickRoute(self, destination):
-        n = self.model.width * self.model.height
-        x, y = self.pos
-        dist = np.zeros(n)
-        dist[self.__toInt(x, y)] = 0
+        print(destination)
+        n = (self.model.width + 2) * (self.model.height + 2)
+        dist = [INFINITE] * n
         prev = [None] * n
-
-        cells = self.model.cells
+        dist[self.__toInt(self.pos)] = 0
 
         pq = PriorityQueue()
 
         pq.push(0, self.pos)
 
         while not pq.empty():
-            _, u = pq.top()
+            _, currentPos = pq.top()
             pq.pop()
 
-            x, y = u
-
-            if u == destination:
+            if currentPos == destination:
                 break
 
-            for nX, nY in self.__getNeighborhood(cells, u):
-                newDistance = dist[self.__toInt(x, y)] + 1
+            # Costo acumulativo de la celda actual y moverse a la siguiente
+            # celda
+            x, y = currentPos
+            for neighborPos in self.model.getNeighbors(x, y):
+                newDistance = dist[self.__toInt(currentPos)] + 1
 
-                if newDistance < dist[self.__toInt(x, y)]:
-                    dist[self.__toInt(nX, nY)] = newDistance
-                    prev[self.__toInt(x, y)] = u
-                    priority = newDistance + self.heuristics((nX, nY), destination)
-                    pq.push(priority, (nX, nY))
+                if newDistance < dist[self.__toInt(neighborPos)]:
+                    dist[self.__toInt(neighborPos)] = newDistance
+                    prev[self.__toInt(neighborPos)] = currentPos
+                    priority = newDistance + self.__heuristics(
+                        (neighborPos), destination
+                    )
+                    pq.push(priority, (neighborPos))
 
         path = []
         u = destination
-        x, y = destination
-        if prev[self.__toInt(x, y)] is not None or u == destination:
+        if prev[self.__toInt(u)] is not None or u == destination:
             while u is not None:
                 path.insert(0, u)
-                u = prev[self.__toInt(x, y)]
+                u = prev[self.__toInt(u)]
 
-        return dist[self.__toInt(x, y)], path
+        return dist[self.__toInt(destination)], path
+        # n = self.model.width * self.model.height
+        # x, y = self.pos
+        # dist = np.zeros(n)
+        # dist[self.__toInt(x, y)] = 0
+        # prev = [None] * n
 
-    def __toInt(self, x, y):
+        # cells = self.model.cells
+
+        # pq = PriorityQueue()
+
+        # pq.push(0, self.pos)
+
+        # while not pq.empty():
+        #     _, u = pq.top()
+        #     pq.pop()
+
+        #     x, y = u
+
+        #     if u == destination:
+        #         break
+
+        #     for nX, nY in self.__getAllNeighborhood(cells, u):
+        #         newDistance = dist[self.__toInt(x, y)] + 1
+
+        #         if newDistance < dist[self.__toInt(x, y)]:
+        #             dist[self.__toInt(nX, nY)] = newDistance
+        #             prev[self.__toInt(x, y)] = u
+        #             priority = newDistance + self.__heuristics((nX, nY), destination)
+        #             pq.push(priority, (nX, nY))
+
+        # path = []
+        # u = destination
+        # x, y = destination
+        # if prev[self.__toInt(x, y)] is not None or u == destination:
+        #     while u is not None:
+        #         path.insert(0, u)
+        #         u = prev[self.__toInt(x, y)]
+
+        # return dist[self.__toInt(x, y)], path
+
+    def __toInt(self, pos):
+        x, y = pos
         return x * (self.model.height + 2) + y
+
+    def __heuristics(_self, src, dest):
+        sX, sY = src
+        dX, dY = dest
+        return (abs(sX - dX) + abs(sY - dY)) * 5
 
     def __isValid(self, matrix, position):
         (row, col) = position
@@ -289,7 +335,7 @@ class Firefighter(Agent):
         cols = len(matrix)
         return 0 <= row < rows and 0 <= col < cols
 
-    def __getNeighborhood(self, matrix, position):
+    def __getAllNeighborhood(self, matrix, position):
         result = []
 
         (ren, col) = position
