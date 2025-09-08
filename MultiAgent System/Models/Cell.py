@@ -33,10 +33,12 @@ class Cell:
 
             if self.pos == [x1, y1]:
                 door = Door(x1, y1, x2, y2)
-                if x1 == x2 and y1 + 1 == y2:
+                if x1 == x2 and y1 - 1 == y2:
                     self.doors["up"] = door
-                elif x1 == x2 and y1 - 1 == y2:
+                elif x1 == x2 and y1 + 1 == y2:
                     self.doors["down"] = door
+                    if x1 == 4 and y1 == 4:
+                        print("Door down True")
                 elif x1 + 1 == x2 and y1 == y2:
                     self.doors["right"] = door
                 elif x1 - 1 == x2 and y1 == y2:
@@ -44,9 +46,9 @@ class Cell:
 
             elif self.pos == [x2, y2]:
                 door = Door(x2, y2, x1, y1)
-                if x1 == x2 and y1 == y2 + 1:
+                if x1 == x2 and y1 == y2 - 1:
                     self.doors["up"] = door
-                elif x1 == x2 and y1 == y2 - 1:
+                elif x1 == x2 and y1 == y2 + 1:
                     self.doors["down"] = door
                 elif x1 == x2 + 1 and y1 == y2:
                     self.doors["right"] = door

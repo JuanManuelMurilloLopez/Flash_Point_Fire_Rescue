@@ -537,18 +537,10 @@ class FireRescueModel(Model):
 
         for dir, (dx, dy) in directions.items():
             nx, ny = x + dx, y + dy
-            if 0 <= nx < self.width and 0 <= ny < self.height:
-                # Si hay pared, no se puede pasar
-                if currentCell.walls[dir] is not None:
-                    continue
-                # Si hay puerta cerrada, no se puede pasar
-                if (
-                    currentCell.doors[dir] is not None
-                    and not currentCell.doors[dir].isOpen
-                ):
-                    continue
-
-                neighbors.append((nx, ny))
+            if 0 <= nx < self.width + 2 and 0 <= ny < self.height + 2:
+                # Si no hay pared, o hay puerta se puede pasar
+                if currentCell.walls[dir] is None or currentCell.doors[dir] is not None:
+                    neighbors.append((nx, ny))
 
         return neighbors
 

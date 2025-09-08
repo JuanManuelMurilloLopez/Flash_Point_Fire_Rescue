@@ -55,12 +55,11 @@ class Firefighter(Agent):
         poiPosition = self.selectPOI()
         if not poiPosition:
             return
-        # print(poiPosition)
         safeDistance, safeRoute = self.safeRoute(poiPosition)
-        quickDistance, quickRoute = self.quickRoute(poiPosition)
+        # quickDistance, quickRoute = self.quickRoute(poiPosition)
 
         print(safeDistance, safeRoute)
-        print(quickDistance, quickRoute)
+        # print(quickDistance, quickRoute)
         # if quickDistance >= safeDistance / 3:
         #     damage = self.damage(quickRoute)
         #     if self.model.damageTokens + damage <= 12:
@@ -205,7 +204,7 @@ class Firefighter(Agent):
         n = (self.model.width + 2) * (self.model.height + 2)
         dist = [INFINITE] * n
         prev = [None] * n
-        dist[self.__toInt(self.pos)] = 0
+        dist[self.__toInt(self.pos)] = 1
 
         pq = PriorityQueue()
 
@@ -233,19 +232,18 @@ class Firefighter(Agent):
 
         path = []
         u = destination
-        if prev[self.__toInt(u)] is not None or u == destination:
-            while u is not None:
-                path.insert(0, u)
-                u = prev[self.__toInt(u)]
+
+        while u is not None:
+            path.insert(0, u)
+            u = prev[self.__toInt(u)]
 
         return dist[self.__toInt(destination)], path
 
     def quickRoute(self, destination):
-        print(destination)
         n = (self.model.width + 2) * (self.model.height + 2)
         dist = [INFINITE] * n
         prev = [None] * n
-        dist[self.__toInt(self.pos)] = 0
+        dist[self.__toInt(self.pos)] = 1
 
         pq = PriorityQueue()
 
@@ -263,7 +261,6 @@ class Firefighter(Agent):
             x, y = currentPos
             for neighborPos in self.model.getNeighbors(x, y):
                 newDistance = dist[self.__toInt(currentPos)] + 1
-
                 if newDistance < dist[self.__toInt(neighborPos)]:
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
@@ -274,10 +271,10 @@ class Firefighter(Agent):
 
         path = []
         u = destination
-        if prev[self.__toInt(u)] is not None or u == destination:
-            while u is not None:
-                path.insert(0, u)
-                u = prev[self.__toInt(u)]
+
+        while u is not None:
+            path.insert(0, u)
+            u = prev[self.__toInt(u)]
 
         return dist[self.__toInt(destination)], path
         # n = self.model.width * self.model.height
