@@ -37,8 +37,6 @@ class Cell:
                     self.doors["up"] = door
                 elif x1 == x2 and y1 + 1 == y2:
                     self.doors["down"] = door
-                    if x1 == 4 and y1 == 4:
-                        print("Door down True")
                 elif x1 + 1 == x2 and y1 == y2:
                     self.doors["right"] = door
                 elif x1 - 1 == x2 and y1 == y2:

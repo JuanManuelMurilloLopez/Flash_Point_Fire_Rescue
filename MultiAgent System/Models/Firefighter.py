@@ -56,10 +56,10 @@ class Firefighter(Agent):
         if not poiPosition:
             return
         safeDistance, safeRoute = self.safeRoute(poiPosition)
-        # quickDistance, quickRoute = self.quickRoute(poiPosition)
+        quickDistance, quickRoute, quickDamage = self.quickRoute(poiPosition)
 
-        print(safeDistance, safeRoute)
-        # print(quickDistance, quickRoute)
+        print("Safe: ", safeDistance, safeRoute)
+        print("Quick: ", quickDistance, quickRoute, quickDamage)
         # if quickDistance >= safeDistance / 3:
         #     damage = self.damage(quickRoute)
         #     if self.model.damageTokens + damage <= 12:
@@ -220,9 +220,13 @@ class Firefighter(Agent):
             # Costo acumulativo de la celda actual y moverse a la siguiente
             # celda
             x, y = currentPos
+            cell = self.model.cells[y][x]
             for neighborPos in self.model.getNeighbors(x, y):
                 newDistance = dist[self.__toInt(currentPos)] + 1
+                direction = self.__moveDirection(currentPos, neighborPos)
                 if newDistance < dist[self.__toInt(neighborPos)]:
+                    if cell.doors[direction]:
+                        newDistance += 1
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
                     priority = newDistance + self.__heuristics(
@@ -244,6 +248,8 @@ class Firefighter(Agent):
         dist = [INFINITE] * n
         prev = [None] * n
         dist[self.__toInt(self.pos)] = 1
+        cells = self.model.cells
+        damage = 0
 
         pq = PriorityQueue()
 
@@ -259,9 +265,15 @@ class Firefighter(Agent):
             # Costo acumulativo de la celda actual y moverse a la siguiente
             # celda
             x, y = currentPos
-            for neighborPos in self.model.getNeighbors(x, y):
+            cell = self.model.cells[y][x]
+            for neighborPos in self.__getAllNeighborhood(cells, (currentPos)):
                 newDistance = dist[self.__toInt(currentPos)] + 1
+                direction = self.__moveDirection(currentPos, neighborPos)
                 if newDistance < dist[self.__toInt(neighborPos)]:
+                    if cell.doors[direction]:
+                        newDistance += 1
+                    elif cell.walls[direction]:
+                        newDistance += 2
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
                     priority = newDistance + self.__heuristics(
@@ -270,52 +282,22 @@ class Firefighter(Agent):
                     pq.push(priority, (neighborPos))
 
         path = []
-        u = destination
+        currentPos = destination
 
-        while u is not None:
-            path.insert(0, u)
-            u = prev[self.__toInt(u)]
+        cell = None
+        while currentPos is not None:
+            path.insert(0, currentPos)
+            nextPos = prev[self.__toInt(currentPos)]
+            if nextPos:
+                direction = self.__moveDirection(currentPos, nextPos)
+                x, y = currentPos
+                cell = self.model.cells[y][x]
+                if cell.walls[direction] and not cell.doors[direction]:
+                    damage += 2
 
-        return dist[self.__toInt(destination)], path
-        # n = self.model.width * self.model.height
-        # x, y = self.pos
-        # dist = np.zeros(n)
-        # dist[self.__toInt(x, y)] = 0
-        # prev = [None] * n
+            currentPos = nextPos
 
-        # cells = self.model.cells
-
-        # pq = PriorityQueue()
-
-        # pq.push(0, self.pos)
-
-        # while not pq.empty():
-        #     _, u = pq.top()
-        #     pq.pop()
-
-        #     x, y = u
-
-        #     if u == destination:
-        #         break
-
-        #     for nX, nY in self.__getAllNeighborhood(cells, u):
-        #         newDistance = dist[self.__toInt(x, y)] + 1
-
-        #         if newDistance < dist[self.__toInt(x, y)]:
-        #             dist[self.__toInt(nX, nY)] = newDistance
-        #             prev[self.__toInt(x, y)] = u
-        #             priority = newDistance + self.__heuristics((nX, nY), destination)
-        #             pq.push(priority, (nX, nY))
-
-        # path = []
-        # u = destination
-        # x, y = destination
-        # if prev[self.__toInt(x, y)] is not None or u == destination:
-        #     while u is not None:
-        #         path.insert(0, u)
-        #         u = prev[self.__toInt(x, y)]
-
-        # return dist[self.__toInt(x, y)], path
+        return dist[self.__toInt(destination)], path, damage
 
     def __toInt(self, pos):
         x, y = pos
@@ -354,3 +336,18 @@ class Firefighter(Agent):
             result.append(new_position)
 
         return result
+
+    def __moveDirection(_self, currentPos, nextPos):
+        x1, y1 = currentPos
+        x2, y2 = nextPos
+
+        # Up
+        if x1 == x2 and y1 < y2:
+            return "up"
+        elif x1 == x2 and y1 > y2:
+            return "down"
+        # Horizontal
+        elif y1 == y2 and x1 < x2:
+            return "right"
+        else:
+            return "left"
