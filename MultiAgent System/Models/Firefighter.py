@@ -225,7 +225,7 @@ class Firefighter(Agent):
                 newDistance = dist[self.__toInt(currentPos)] + 1
                 direction = self.__moveDirection(currentPos, neighborPos)
                 if newDistance < dist[self.__toInt(neighborPos)]:
-                    if cell.doors[direction]:
+                    if cell.doors[direction] and not cell.doors[direction].isOpen():
                         newDistance += 1
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
@@ -270,10 +270,11 @@ class Firefighter(Agent):
                 newDistance = dist[self.__toInt(currentPos)] + 1
                 direction = self.__moveDirection(currentPos, neighborPos)
                 if newDistance < dist[self.__toInt(neighborPos)]:
-                    if cell.doors[direction]:
+                    if cell.doors[direction] and not cell.doors[direction].isOpen():
                         newDistance += 1
                     elif cell.walls[direction]:
-                        newDistance += 2
+                        newDistance += 4 - cell.walls[direction].damage
+
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
                     priority = newDistance + self.__heuristics(
