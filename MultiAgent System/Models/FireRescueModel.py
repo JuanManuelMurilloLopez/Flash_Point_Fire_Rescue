@@ -87,11 +87,11 @@ class FireRescueModel(Model):
                 row.append(cell)
             self.cells.append(row)
 
-        self.entrances = []
+        self.entrances = set()
         # Añadir las entradas
         for x, y in board["accessPoints"]:
             self.cells[y][x].isAccessPoint = True
-            self.entrances.append((x, y))
+            self.entrances.add((x, y))
 
         # Información del tablero
         self.board = board
@@ -148,7 +148,7 @@ class FireRescueModel(Model):
         # Añadir los Firefighters
         for i in range(noOfAagents):
             pos = possiblePositions[i]
-            fireFighter = Firefighter(self, self.strategy)
+            fireFighter = Firefighter(self, self.strategy, i)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
 

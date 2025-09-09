@@ -7,7 +7,7 @@ INFINITE = 1_000_000
 
 
 class Firefighter(Agent):
-    def __init__(self, model, strategy):
+    def __init__(self, model, strategy, id):
         super().__init__(model)
         self.maxActionPoints = 8
         self.actionPoints = 4
@@ -15,22 +15,27 @@ class Firefighter(Agent):
         self.knockedDown = False
         self.strategy = strategy
         self.selectedStrategy = None
+        self.id = id
 
     # TODO: Terminar lógica del step
     def step(self):
-        # Re-establish action points
-        x, y = self.pos
 
-        if (x == 0 or x == self.model.width - 1) and (
-            y == 0 or y == self.model.height - 1
-        ):
-            self.chooseEntry()
+        self.outOfBuilding()
+
         if self.strategy == "random":
             self.randomStrategy()
         else:
             self.intelligentStrategy()
 
         self.actionPoints = min(self.actionPoints + 4, self.maxActionPoints)
+
+    def outOfBuilding(self):
+        x, y = self.pos
+
+        if (x == 0 or x == self.model.width - 1) and (
+            y == 0 or y == self.model.height - 1
+        ):
+            self.chooseEntry()
 
     def randomStrategy(self):
         while self.actionPoints > 0:
@@ -47,6 +52,7 @@ class Firefighter(Agent):
 
     def intelligentStrategy(self):
         if self.selectedStrategy == None:
+
             if self.carryingVictim:
                 self.__getOut()
             else:
@@ -58,6 +64,14 @@ class Firefighter(Agent):
     def move(self, pos):
         # Failsafe
         if self.pos == pos:
+            return True
+
+        if (
+            self.pos in self.model.entrances
+            and self.actionPoints >= 2
+            and self.carryingVictim
+        ):
+            self.__saveVictim()
             return True
 
         # No other player in next cell
@@ -92,7 +106,7 @@ class Firefighter(Agent):
     def useStrategy(self):
         while self.actionPoints > 0:
             strategy = self.selectedStrategy
-            print(self.actionPoints, strategy)
+            print(self.id, ": ", self.actionPoints, strategy)
 
             # Check if player has finished strategy
             if len(strategy) <= 1:
@@ -142,7 +156,7 @@ class Firefighter(Agent):
             # Si el POI es una víctima, la recuperamos
             if poiAtPos.victim == 1:
                 self.carryingVictim = True
-                print("Found a Victim!")
+                print("Found a Victim at ", (x, y), "!")
             # Si el POI era una falsa alarma, la eliminamos
             elif poiAtPos.victim == 0:
                 self.model.POIs[self.pos] = 0
@@ -232,7 +246,7 @@ class Firefighter(Agent):
         return "Safe", safeRoute
 
     def chooseEntry(self):
-        entrances = self.model.entrances
+        entrances = list(self.model.entrances)
         option = np.random.permutation(len(entrances))
         for i in option:
             if self.model.grid.is_cell_empty(entrances[i]):
@@ -341,6 +355,18 @@ class Firefighter(Agent):
         while u is not None:
             path.insert(0, u)
             u = prev[self.__toInt(u)]
+
+        if self.carryingVictim:
+            x, y = destination
+
+            if x - 1 == 0:
+                path.append((0, y))
+            elif x + 1 == self.model.width - 1:
+                path.append((self.model.width - 1, y))
+            elif y - 1 == 0:
+                path.append((x, 0))
+            elif y + 1 == self.model.height - 1:
+                path.append((x, self.model.height - 1))
 
         return dist[self.__toInt(destination)], path
 
@@ -457,3 +483,15 @@ class Firefighter(Agent):
     def __getOut(self):
         exitPos = self.selectExit()
         _distance, self.selectedStrategy = self.safeRoute(exitPos)
+
+    def __saveVictim(self):
+        self.actionPoints -= 2
+        self.model.victimsRescued += 1
+        print("Victim Saved: ", self.model.victimsRescued)
+        self.carryingVictim = False
+        options = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]
+        for i in options:
+            if self.model.grid.is_cell_empty(i):
+                self.model.grid.move_agent(self, i)
+                self.selectedStrategy = None
+                return
