@@ -7,6 +7,7 @@ class Cell:
         self.pos = pos
         self.walls = {"up": None, "right": None, "down": None, "left": None}
         self.doors = {"up": None, "right": None, "down": None, "left": None}
+        self.isAccessPoint = False
 
         # Añadir las paredes a la celda
         if wallLayout[0] == 1:
