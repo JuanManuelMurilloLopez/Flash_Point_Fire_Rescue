@@ -7,66 +7,141 @@ INFINITE = 1_000_000
 
 
 class Firefighter(Agent):
-    def __init__(self, model, strategy):
+    def __init__(self, model, strategy, id):
         super().__init__(model)
         self.maxActionPoints = 8
         self.actionPoints = 4
         self.carryingVictim = False
         self.knockedDown = False
         self.strategy = strategy
+        self.selectedStrategy = None
+        self.id = id
 
-    # TODO: Terminar lógica del step
     def step(self):
+
+        self.outOfBuilding()
+
         if self.strategy == "random":
             self.randomStrategy()
         else:
             self.intelligentStrategy()
 
-    def randomStrategy(self):
-        while self.actionPoints > 0:
-            self.move()
-            self.actionPoints -= 1
-
         self.actionPoints = min(self.actionPoints + 4, self.maxActionPoints)
 
+    def outOfBuilding(self):
+        x, y = self.pos
+
+        if (x == 0 or x == self.model.width - 1) and (
+            y == 0 or y == self.model.height - 1
+        ):
+            self.chooseEntry()
+
+    def randomStrategy(self):
+        while self.actionPoints > 0:
+            # Movimiento aleatorio a una celda vecina
+            possiblePositions = self.model.grid.get_neighborhood(
+                self.pos, moore=False, include_center=False
+            )
+
+            if len(possiblePositions):
+                options = np.random.permutation(len(possiblePositions))
+                for i in options:
+                    if self.move(options[i]):
+                        break
+
     def intelligentStrategy(self):
-        self.searchForPOIs()
+        if self.selectedStrategy == None:
 
-    def move(self):
-        # Movimiento aleatorio a una celda vecina
-        possiblePositions = self.model.grid.get_neighborhood(
-            self.pos, moore=False, include_center=False
-        )
+            if self.carryingVictim:
+                self.__getOut()
+            else:
+                self.searchForPOIs()
+        else:
+            self.useStrategy()
 
-        if len(possiblePositions):
-            options = np.random.permutation(len(possiblePositions))
-            for i in options:
-                if self.model.grid.is_cell_empty(possiblePositions[i]):
-                    newPos = possiblePositions[i]
-                    self.model.grid.move_agent(self, newPos)
-                    self.pos = newPos
-                    # Revisar si se necesita alguna interacción al moverse
-                    self.checkPOI()
-                    self.checkFire()
-                    break
+    # Handle player movement accounting for walls, doors, and AP spenditure
+    def move(self, pos):
+        # Failsafe
+        if self.pos == pos:
+            return True
 
+        if (
+            self.pos in self.model.entrances
+            and self.actionPoints >= 2
+            and self.carryingVictim
+        ):
+            self.__saveVictim()
+            return True
+
+        # No other player in next cell
+        if self.model.grid.is_cell_empty(pos):
+            x, y = self.pos
+            direction = self.__moveDirection(self.pos, pos)
+
+            # Open door in path
+            if self.model.cells[y][x].doors[direction]:
+                self.openCloseDoor()
+
+            # Destroy wall to walk through
+            elif self.model.cells[y][x].walls[direction]:
+                self.chopWall(direction)
+
+            # Calculate required AP to walk based if carrying a victim
+            requiredAP = (lambda self: 2 if self.carryingVictim else 1)(self)
+            if self.actionPoints >= requiredAP:
+                self.model.grid.move_agent(self, pos)
+                self.pos = pos
+                self.actionPoints -= requiredAP
+                # Revisar si se necesita alguna interacción al moverse
+                self.checkPOI()
+                self.checkFire()
+            return True
+
+        return False
+
+    # TODO: Account and react to fire
+    # Move until player runs out of AP or finishes its current strategy, thus
+    # getting a new one
+    def useStrategy(self):
+        while self.actionPoints > 0:
+            strategy = self.selectedStrategy
+            print(self.id, ": ", self.actionPoints, strategy)
+
+            # Check if player has finished strategy
+            if len(strategy) <= 1:
+                if self.carryingVictim:
+                    self.__getOut()
+                else:
+                    self.searchForPOIs()
+
+            # Finish turn if player finishes strategy
+            if len(strategy) == 0:
+                self.selectedStrategy = None
+                return
+
+            step = strategy[0]
+            if self.move(step):
+                self.selectedStrategy = strategy[1:]
+            else:
+                break
+
+    # Search for the closes POI relative to player's current position and
+    # create a strategy to get to it
     def searchForPOIs(self):
-        self.chooseEntry()
         poiPosition = self.selectPOI()
+        # Return if there is no more POIs in map not selected
         if not poiPosition:
             return
-        safeDistance, safeRoute = self.safeRoute(poiPosition)
-        quickDistance, quickRoute, quickDamage = self.quickRoute(poiPosition)
+        safeStrategy = self.safeRoute(poiPosition)
+        quickStrategy = self.quickRoute(poiPosition)
 
-        print("Safe: ", safeDistance, safeRoute)
-        print("Quick: ", quickDistance, quickRoute, quickDamage)
-        # if quickDistance >= safeDistance / 3:
-        #     damage = self.damage(quickRoute)
-        #     if self.model.damageTokens + damage <= 12:
-        #         self.strategy = quickRoute
-        #         return
+        # safeDistance, safeRoute = safeStrategy
+        # quickDistance, quickRoute, quickDamage = quickStrategy
 
-        # self.strategy = safeRoute
+        # Select quickes strategy accounting for damage heuristic
+        _strategy, self.selectedStrategy = self.chooseStrategy(
+            safeStrategy, quickStrategy
+        )
 
     # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
@@ -80,9 +155,11 @@ class Firefighter(Agent):
             # Si el POI es una víctima, la recuperamos
             if poiAtPos.victim == 1:
                 self.carryingVictim = True
+                print("Found a Victim at ", (x, y), "!")
             # Si el POI era una falsa alarma, la eliminamos
             elif poiAtPos.victim == 0:
                 self.model.POIs[self.pos] = 0
+                print("It was not a victim :(")
                 self.model.activePois -= 1
 
     # Revisar si en la posición dada hay fuego
@@ -124,44 +201,51 @@ class Firefighter(Agent):
     # Cambia el estado de la puerta (Si no está destruida)
     def openCloseDoor(self):
         if self.actionPoints >= 1:
-            cell = self.model.cells[self.pos]
+            x, y = self.pos
+            cell = self.model.cells[y][x]
             if cell.hasDoor():
                 cell.changeDoorStatus()
                 self.actionPoints -= 1
         else:
             return
 
-    # TODO: Lógica para llevar la víctima a la salida
-    def saveVictim(self):
-        pass
-
     def chopWall(self, orientation):
         # Colocar daño en la pared para abrir camino (2 AP por daño, cuando la pared tiene 2 de daño se destruye)
-        if self.actionPoints >= 2:
-
+        if self.actionPoints >= 1:
+            x, y = self.pos
             # Obtenemos la celda
-            cell = self.model.cells[self.pos]
+            cell = self.model.cells[y][x]
             # Obtenemos la pared
             wall = cell.walls[orientation]
+            # Verificamos que no esté destruida o destruimos
+            while not wall.isDestroyed():
+                # Añadimos el daño a la pared
+                wall.addDamage()
+                # Agregamos el daño al contador del modelo
+                self.model.damageTokens += 1
 
-            # Verificamos que no esté destruida
-            if wall.isDestroyed():
-                return
+                # Revisamos si existía una puerta en esa pared
+                door = cell.doors[orientation]
+                if door:
+                    door.destroy()
 
-            # Añadimos el daño a la pared
-            wall.addDamage()
-            # Agregamos el daño al contador del modelo
-            self.model.damageTokens += 1
+                self.actionPoints -= 1
 
-            # Revisamos si existía una puerta en esa pared
-            door = cell.doors[orientation]
-            if door:
-                door.destroy()
+    # Heuristic function to decide which strategy to use
+    def chooseStrategy(self, safeStrategy, quickStrategy):
+        safeDistance, safeRoute = safeStrategy
+        quickDistance, quickRoute, quickDamage = quickStrategy
 
-            self.actionPoints -= 2
+        if (
+            safeDistance * 0.8 > quickDistance
+            and quickDamage + self.model.damageTokens < 24 / 2
+        ):
+            return "Quick", quickRoute
+
+        return "Safe", safeRoute
 
     def chooseEntry(self):
-        entrances = self.model.entrances
+        entrances = list(self.model.entrances)
         option = np.random.permutation(len(entrances))
         for i in option:
             if self.model.grid.is_cell_empty(entrances[i]):
@@ -181,8 +265,6 @@ class Firefighter(Agent):
 
         while not POIfound:
             if not queue:
-                print("No more POIs to be found")
-                print(self.model.POIsFound)
                 return False
 
             path = queue.popleft()
@@ -190,6 +272,34 @@ class Firefighter(Agent):
 
             if cells[y][x] and (x, y) not in self.model.POIsFound:
                 POIfound = True
+                self.model.POIsFound.add((x, y))
+                return (x, y)
+
+            neighbors = self.model.search(x, y)
+
+            for nX, nY in neighbors:
+                if (nX, nY) not in visited and self.__isValid(cells, (nX, nY)):
+                    visited.add((nX, nY))
+                    queue.append((nX, nY))
+
+    def selectExit(self):
+        cells = self.model.cells
+
+        exitFound = False
+
+        queue = deque()
+        queue.append(self.pos)
+        visited = set({self.pos})
+
+        while not exitFound:
+            if not queue:
+                return False
+
+            cell = queue.popleft()
+            x, y = cell
+
+            if cells[y][x].isAccessPoint:
+                exitFound = True
                 self.model.POIsFound.add((x, y))
                 return (x, y)
 
@@ -221,17 +331,21 @@ class Firefighter(Agent):
             # celda
             x, y = currentPos
             cell = self.model.cells[y][x]
+
             for neighborPos in self.model.getNeighbors(x, y):
                 newDistance = dist[self.__toInt(currentPos)] + 1
                 direction = self.__moveDirection(currentPos, neighborPos)
+
                 if newDistance < dist[self.__toInt(neighborPos)]:
                     if cell.doors[direction] and not cell.doors[direction].isOpen():
                         newDistance += 1
+
                     dist[self.__toInt(neighborPos)] = newDistance
                     prev[self.__toInt(neighborPos)] = currentPos
                     priority = newDistance + self.__heuristics(
                         (neighborPos), destination
                     )
+
                     pq.push(priority, (neighborPos))
 
         path = []
@@ -240,6 +354,18 @@ class Firefighter(Agent):
         while u is not None:
             path.insert(0, u)
             u = prev[self.__toInt(u)]
+
+        if self.carryingVictim:
+            x, y = destination
+
+            if x - 1 == 0:
+                path.append((0, y))
+            elif x + 1 == self.model.width - 1:
+                path.append((self.model.width - 1, y))
+            elif y - 1 == 0:
+                path.append((x, 0))
+            elif y + 1 == self.model.height - 1:
+                path.append((x, self.model.height - 1))
 
         return dist[self.__toInt(destination)], path
 
@@ -352,3 +478,19 @@ class Firefighter(Agent):
             return "right"
         else:
             return "left"
+
+    def __getOut(self):
+        exitPos = self.selectExit()
+        _distance, self.selectedStrategy = self.safeRoute(exitPos)
+
+    def __saveVictim(self):
+        self.actionPoints -= 2
+        self.model.victimsRescued += 1
+        print("Victim Saved: ", self.model.victimsRescued)
+        self.carryingVictim = False
+        options = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]
+        for i in options:
+            if self.model.grid.is_cell_empty(i):
+                self.model.grid.move_agent(self, i)
+                self.selectedStrategy = None
+                return
