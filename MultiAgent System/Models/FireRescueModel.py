@@ -90,8 +90,13 @@ class FireRescueModel(Model):
         self.entrances = set()
         # Añadir las entradas
         for x, y in board["accessPoints"]:
-            self.cells[y][x].isAccessPoint = True
-            self.entrances.add((x, y))
+            try:
+                self.cells[y][x].isAccessPoint = True
+                self.entrances.add((x, y))
+            except:
+                print(
+                    f"Couldn't place acces in: {x, y}: {len(self.cells[0])}x{len(self.cells)}"
+                )
 
         # Información del tablero
         self.board = board

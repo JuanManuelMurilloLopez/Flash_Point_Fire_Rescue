@@ -17,7 +17,6 @@ class Firefighter(Agent):
         self.selectedStrategy = None
         self.id = id
 
-    # TODO: Terminar lógica del step
     def step(self):
 
         self.outOfBuilding()
