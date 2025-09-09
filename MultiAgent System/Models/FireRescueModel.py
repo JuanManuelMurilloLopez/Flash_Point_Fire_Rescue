@@ -87,11 +87,16 @@ class FireRescueModel(Model):
                 row.append(cell)
             self.cells.append(row)
 
-        self.entrances = []
+        self.entrances = set()
         # Añadir las entradas
         for x, y in board["accessPoints"]:
-            self.cells[y][x].isAccessPoint = True
-            self.entrances.append((x, y))
+            try:
+                self.cells[y][x].isAccessPoint = True
+                self.entrances.add((x, y))
+            except:
+                print(
+                    f"Couldn't place acces in: {x, y}: {len(self.cells[0])}x{len(self.cells)}"
+                )
 
         # Información del tablero
         self.board = board
@@ -148,7 +153,7 @@ class FireRescueModel(Model):
         # Añadir los Firefighters
         for i in range(noOfAagents):
             pos = possiblePositions[i]
-            fireFighter = Firefighter(self, self.strategy)
+            fireFighter = Firefighter(self, self.strategy, i)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
 
@@ -228,6 +233,7 @@ class FireRescueModel(Model):
                 if not cell.walls["up"].isDestroyed():
                     cell.walls["up"].addDamage()
                     self.damageTokens += 1
+                    print("Added Damage: ", self.damageTokens)
 
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
@@ -279,6 +285,7 @@ class FireRescueModel(Model):
                 if not cell.walls["down"].isDestroyed():
                     cell.walls["down"].addDamage()
                     self.damageTokens += 1
+                    print("Added Damage: ", self.damageTokens)
 
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
@@ -330,6 +337,7 @@ class FireRescueModel(Model):
                 if not cell.walls["right"].isDestroyed():
                     cell.walls["right"].addDamage()
                     self.damageTokens += 1
+                    print("Added Damage: ", self.damageTokens)
 
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
@@ -381,6 +389,7 @@ class FireRescueModel(Model):
                 if not cell.walls["left"].isDestroyed():
                     cell.walls["left"].addDamage()
                     self.damageTokens += 1
+                    print("Added Damage: ", self.damageTokens)
 
             # Revisar si había una puerta
             # Si hay puerta y no está destruida, destruirla
@@ -435,6 +444,8 @@ class FireRescueModel(Model):
                 if not cell.walls[direction].isDestroyed():
                     cell.walls[direction].addDamage()
                     self.damageTokens += 1
+                    print("Added Damage: ", self.damageTokens)
+
                 break
 
             # Destruir puerta si existe
