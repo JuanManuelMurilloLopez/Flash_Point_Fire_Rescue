@@ -12,5 +12,14 @@ class Door:
         if self.state == "open":
             self.state = "closed"
 
+    def isOpen(self):
+        return self.state == "open" or self.state == "destroyed"
+
     def destroy(self):
         self.state = "destroyed"
+
+    def isDestroyed(self):
+        if self.state == "destroyed":
+            return True
+        else:
+            return False

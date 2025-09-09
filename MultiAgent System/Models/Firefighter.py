@@ -1,95 +1,354 @@
 import numpy as np
 from mesa import Agent, Model
+from collections import deque
+from Utils.PriorityQueu import PriorityQueue
 
-from Fire import Fire
+INFINITE = 1_000_000
+
 
 class Firefighter(Agent):
-    def __init__(self, model, initialPos):
+    def __init__(self, model, strategy):
         super().__init__(model)
-        self.pos = initialPos
+        self.maxActionPoints = 8
         self.actionPoints = 4
         self.carryingVictim = False
         self.knockedDown = False
+        self.strategy = strategy
 
+    # TODO: Terminar lógica del step
     def step(self):
+        if self.strategy == "random":
+            self.randomStrategy()
+        else:
+            self.intelligentStrategy()
+
+    def randomStrategy(self):
         while self.actionPoints > 0:
             self.move()
             self.actionPoints -= 1
 
-        self.actionPoints += 4
+        self.actionPoints = min(self.actionPoints + 4, self.maxActionPoints)
+
+    def intelligentStrategy(self):
+        self.searchForPOIs()
 
     def move(self):
         # Movimiento aleatorio a una celda vecina
-        possiblePositions = self.model.grid.get_neighborhood(self.pos, moore = False, include_center = False)
-        options = np.random.permutation(len(possiblePositions))
-        if options:
-            newPos = options[0]
-            self.model.grid.move_agent(self, newPos)
-            self.pos = newPos
-            # Revisar si se necesita alguna interacción al moverse
-            self.checkPOI()
-            self.checkFire()
+        possiblePositions = self.model.grid.get_neighborhood(
+            self.pos, moore=False, include_center=False
+        )
 
+        if len(possiblePositions):
+            options = np.random.permutation(len(possiblePositions))
+            for i in options:
+                if self.model.grid.is_cell_empty(possiblePositions[i]):
+                    newPos = possiblePositions[i]
+                    self.model.grid.move_agent(self, newPos)
+                    self.pos = newPos
+                    # Revisar si se necesita alguna interacción al moverse
+                    self.checkPOI()
+                    self.checkFire()
+                    break
+
+    def searchForPOIs(self):
+        self.chooseEntry()
+        poiPosition = self.selectPOI()
+        if not poiPosition:
+            return
+        safeDistance, safeRoute = self.safeRoute(poiPosition)
+        quickDistance, quickRoute, quickDamage = self.quickRoute(poiPosition)
+
+        print("Safe: ", safeDistance, safeRoute)
+        print("Quick: ", quickDistance, quickRoute, quickDamage)
+        # if quickDistance >= safeDistance / 3:
+        #     damage = self.damage(quickRoute)
+        #     if self.model.damageTokens + damage <= 12:
+        #         self.strategy = quickRoute
+        #         return
+
+        # self.strategy = safeRoute
+
+    # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
-        # Revisar si hay un POI en la posición del firefighter
-        for poi in self.model.POIs:
-            if self.pos[0] == poi[0] and self.pos[1] == poi[1]:
-                if poi[2] == 1:
-                    # Victima encontrada
-                    self.carryingVictim = True
-                    # TODO: implementar ruta a la salida
-                elif poi[2] == 0:
-                    # Falsa alarma
-                    # TODO: quitar POI del tablero
-                    return
+        # Revisar si hay un POI en la posición del bombero
+        # poiAtPos = [p for p in self.model.POIs if p.pos == self.pos]
+        x, y = self.pos
+        poiAtPos = self.model.POIs[y][x]
 
+        if poiAtPos != 0:
+            poiAtPos.reveal()
+            # Si el POI es una víctima, la recuperamos
+            if poiAtPos.victim == 1:
+                self.carryingVictim = True
+            # Si el POI era una falsa alarma, la eliminamos
+            elif poiAtPos.victim == 0:
+                self.model.POIs[self.pos] = 0
+                self.model.activePois -= 1
 
+    # Revisar si en la posición dada hay fuego
     def checkFire(self):
-        # Si la casilla en la que está tiene fuego, apagarlo (siguiendo las reglas del juego)
-        agentsInCell = self.model.grid.get_cell_list_contents([self.pos])
+        # Revisar si hay fuego en la posición del bombero
+        # fireAtPos = [f for f in self.model.fires if f.pos == position and f.state == fireState]
+        x, y = self.pos
+        fireAtPos = self.model.fires[y][x]
 
-        for agent in agentsInCell:
-            if isinstance(agent, Fire):
-                if agent.state == "fire":
-                    self.knockedDown = True
-                    self.model.moveToAmbulance(self)
-                elif agent.state == "smoke":
-                    # TODO: Lógica para elegir aleatoreamente si se apaga o no
-                    pass
-
-        if self.pos in self.model.fireLocations:
-            # TODO: Implementar apagar fuego
-            pass
-
-    def openCloseDoor(self, cell):
-        # Abrir o cerrar puerta en la celda indicada (1 action point)
-        if self.actionPoints >= 1:
-            # TODO: Añadir lógica para modificar el estado de la puerta
-            self.actionPoints -= 1
+        if fireAtPos != 0:
+            if fireAtPos.state == "fire":
+                return True
+        else:
+            return False
 
     # action -> "removeFire", "removeSmoke", "flipFire"
-    def extinguishFire(self, cell, action):
-        # Apagar fuego en la celda indicada (1 AP para humo, 2 AP para fuego)
-        agents = self.model.grid.get_cell_list_contents([cell])
-        for agent in agents:
-            if isinstance(agent, Fire):
-                if agent.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
-                    agent.extinguish()
-                    self.actionPoints -= 1
-                elif agent.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
-                    agent.extinguish()
-                    self.actionPoints -= 1
-                elif agent.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
-                    agent.smoke()
-                    self.actionPoints -= 1
+    # Apagar el fuego en la posición indicada
+    def extinguishFire(self, position, action):
 
-    def saveVictim(self, cell):
-        # Llevar a la víctima afuera, 2 AP
-        # TODO: Lógica para llevar la víctima a la salida
+        # Rescatamos el fuego en la posición
+        # fireAtPos = [f for f in self.model.fires if f.pos == position]
+        fire = self.model.POIs[position]
+
+        # Si no hay fuego no hacemos nada
+        if fire == 0:
+            return
+
+        # Procedimiento dependiendo de la acción, quitamos action points y eliminamos o modificamos el fuego
+        if fire.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
+            self.model.POIs[position] = 0
+            self.actionPoints -= 1
+        elif fire.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
+            self.model.POIs[position] = 0
+            self.actionPoints -= 2
+        elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
+            fire.smoke()
+            self.actionPoints -= 1
+
+    # Cambia el estado de la puerta (Si no está destruida)
+    def openCloseDoor(self):
+        if self.actionPoints >= 1:
+            cell = self.model.cells[self.pos]
+            if cell.hasDoor():
+                cell.changeDoorStatus()
+                self.actionPoints -= 1
+        else:
+            return
+
+    # TODO: Lógica para llevar la víctima a la salida
+    def saveVictim(self):
         pass
 
-    def chopWall(self, cell):
+    def chopWall(self, orientation):
         # Colocar daño en la pared para abrir camino (2 AP por daño, cuando la pared tiene 2 de daño se destruye)
         if self.actionPoints >= 2:
-            # TODO: Lógica para el daño a la pared
+
+            # Obtenemos la celda
+            cell = self.model.cells[self.pos]
+            # Obtenemos la pared
+            wall = cell.walls[orientation]
+
+            # Verificamos que no esté destruida
+            if wall.isDestroyed():
+                return
+
+            # Añadimos el daño a la pared
+            wall.addDamage()
+            # Agregamos el daño al contador del modelo
+            self.model.damageTokens += 1
+
+            # Revisamos si existía una puerta en esa pared
+            door = cell.doors[orientation]
+            if door:
+                door.destroy()
+
             self.actionPoints -= 2
+
+    def chooseEntry(self):
+        entrances = self.model.entrances
+        option = np.random.permutation(len(entrances))
+        for i in option:
+            if self.model.grid.is_cell_empty(entrances[i]):
+                self.model.grid.move_agent(self, entrances[i])
+                break
+
+    # Selecciona el primer POI disponible desde la entrada que no haya elegido
+    # otro agente
+    def selectPOI(self):
+        cells = self.model.POIs
+
+        POIfound = False
+
+        queue = deque()
+        queue.append(self.pos)
+        visited = set({self.pos})
+
+        while not POIfound:
+            if not queue:
+                print("No more POIs to be found")
+                print(self.model.POIsFound)
+                return False
+
+            path = queue.popleft()
+            x, y = path
+
+            if cells[y][x] and (x, y) not in self.model.POIsFound:
+                POIfound = True
+                self.model.POIsFound.add((x, y))
+                return (x, y)
+
+            neighbors = self.model.search(x, y)
+
+            for nX, nY in neighbors:
+                if (nX, nY) not in visited and self.__isValid(cells, (nX, nY)):
+                    visited.add((nX, nY))
+                    queue.append((nX, nY))
+
+    def safeRoute(self, destination):
+        n = (self.model.width + 2) * (self.model.height + 2)
+        dist = [INFINITE] * n
+        prev = [None] * n
+        dist[self.__toInt(self.pos)] = 1
+
+        pq = PriorityQueue()
+
+        pq.push(0, self.pos)
+
+        while not pq.empty():
+            _, currentPos = pq.top()
+            pq.pop()
+
+            if currentPos == destination:
+                break
+
+            # Costo acumulativo de la celda actual y moverse a la siguiente
+            # celda
+            x, y = currentPos
+            cell = self.model.cells[y][x]
+            for neighborPos in self.model.getNeighbors(x, y):
+                newDistance = dist[self.__toInt(currentPos)] + 1
+                direction = self.__moveDirection(currentPos, neighborPos)
+                if newDistance < dist[self.__toInt(neighborPos)]:
+                    if cell.doors[direction] and not cell.doors[direction].isOpen():
+                        newDistance += 1
+                    dist[self.__toInt(neighborPos)] = newDistance
+                    prev[self.__toInt(neighborPos)] = currentPos
+                    priority = newDistance + self.__heuristics(
+                        (neighborPos), destination
+                    )
+                    pq.push(priority, (neighborPos))
+
+        path = []
+        u = destination
+
+        while u is not None:
+            path.insert(0, u)
+            u = prev[self.__toInt(u)]
+
+        return dist[self.__toInt(destination)], path
+
+    def quickRoute(self, destination):
+        n = (self.model.width + 2) * (self.model.height + 2)
+        dist = [INFINITE] * n
+        prev = [None] * n
+        dist[self.__toInt(self.pos)] = 1
+        cells = self.model.cells
+        damage = 0
+
+        pq = PriorityQueue()
+
+        pq.push(0, self.pos)
+
+        while not pq.empty():
+            _, currentPos = pq.top()
+            pq.pop()
+
+            if currentPos == destination:
+                break
+
+            # Costo acumulativo de la celda actual y moverse a la siguiente
+            # celda
+            x, y = currentPos
+            cell = self.model.cells[y][x]
+            for neighborPos in self.__getAllNeighborhood(cells, (currentPos)):
+                newDistance = dist[self.__toInt(currentPos)] + 1
+                direction = self.__moveDirection(currentPos, neighborPos)
+                if newDistance < dist[self.__toInt(neighborPos)]:
+                    if cell.doors[direction] and not cell.doors[direction].isOpen():
+                        newDistance += 1
+                    elif cell.walls[direction]:
+                        newDistance += 4 - cell.walls[direction].damage
+
+                    dist[self.__toInt(neighborPos)] = newDistance
+                    prev[self.__toInt(neighborPos)] = currentPos
+                    priority = newDistance + self.__heuristics(
+                        (neighborPos), destination
+                    )
+                    pq.push(priority, (neighborPos))
+
+        path = []
+        currentPos = destination
+
+        cell = None
+        while currentPos is not None:
+            path.insert(0, currentPos)
+            nextPos = prev[self.__toInt(currentPos)]
+            if nextPos:
+                direction = self.__moveDirection(currentPos, nextPos)
+                x, y = currentPos
+                cell = self.model.cells[y][x]
+                if cell.walls[direction] and not cell.doors[direction]:
+                    damage += 2
+
+            currentPos = nextPos
+
+        return dist[self.__toInt(destination)], path, damage
+
+    def __toInt(self, pos):
+        x, y = pos
+        return x * (self.model.height + 2) + y
+
+    def __heuristics(_self, src, dest):
+        sX, sY = src
+        dX, dY = dest
+        return (abs(sX - dX) + abs(sY - dY)) * 5
+
+    def __isValid(self, matrix, position):
+        (row, col) = position
+        rows = len(matrix[0])
+        cols = len(matrix)
+        return 0 <= row < rows and 0 <= col < cols
+
+    def __getAllNeighborhood(self, matrix, position):
+        result = []
+
+        (ren, col) = position
+
+        new_position = ((ren - 1), col)
+        if self.__isValid(matrix, new_position):
+            result.append(new_position)
+
+        new_position = ((ren + 1), col)
+        if self.__isValid(matrix, new_position):
+            result.append(new_position)
+
+        new_position = (ren, (col - 1))
+        if self.__isValid(matrix, new_position):
+            result.append(new_position)
+
+        new_position = (ren, (col + 1))
+        if self.__isValid(matrix, new_position):
+            result.append(new_position)
+
+        return result
+
+    def __moveDirection(_self, currentPos, nextPos):
+        x1, y1 = currentPos
+        x2, y2 = nextPos
+
+        # Up
+        if x1 == x2 and y1 < y2:
+            return "up"
+        elif x1 == x2 and y1 > y2:
+            return "down"
+        # Horizontal
+        elif y1 == y2 and x1 < x2:
+            return "right"
+        else:
+            return "left"
