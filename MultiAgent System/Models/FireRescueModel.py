@@ -53,7 +53,7 @@ class FireRescueModel(Model):
                 "VictimsRescued": lambda model: model.victimsRescued,
                 "VictimsLost": lambda model: model.victimsLost,
                 "NewFire": lambda model: model.newFires,
-                "Dices": lambda model: {"red": model.dice[0], "black": model.dice[1]},
+                "Dices": lambda model: {"red": model.dice[1], "black": model.dice[0]},
                 "DamageTokens": lambda model: model.damageTokens,
                 "ChangedPOIs": lambda model: model.changedPOI,
             },
@@ -200,7 +200,7 @@ class FireRescueModel(Model):
             # Si es humo, lo hacemos fuego
             if fire.state == "smoke":
                 fire.fire()
-                # TODO Aquí se agrega un nuevo cambio a la lista de fuegos nuevos? Cómo se maneja en las explosiones
+                self.newFires.append({"position": self.dice, "state": fire.state})
 
             # Si es fuego, creamos una explosión
             elif fire.state == "fire":
@@ -449,6 +449,7 @@ class FireRescueModel(Model):
                 fire = Fire(pos, state="fire")
                 self.fires[y][x] = fire
                 cell.fire = fire
+                self.newFires.append({"position": (x, y), "state": fire.state})
                 break
 
             # Verificar bomberos
@@ -461,6 +462,11 @@ class FireRescueModel(Model):
             poiAtPos = self.POIs[y][x]
             if poiAtPos != 0:
                 poiAtPos.reveal()
+                self.changedPOI.append({
+                    "position": pos,
+                    "Rescued": poiAtPos.rescued,
+                    "Victim": poiAtPos.victim,
+                })
                 if poiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[y][x] = 0
@@ -483,6 +489,7 @@ class FireRescueModel(Model):
                                 neighbor = self.fires[ny, nx]
                                 if neighbor != 0 and neighbor.state == "fire":
                                     fire.fire()
+                                    self.newFires.append({"position": (x, y), "state": fire.state})
 
                                     fireChanged = True
                                     break
@@ -557,14 +564,16 @@ class FireRescueModel(Model):
 
     # Añadir la lógica del step
     def step(self):
-        # Simular los dados
+        self.newFires = []
+        self.changedPOI = []
         self.dice = (random.randrange(self.width), random.randrange(self.height))
         if self.round != 0:
             self.advanceFire()
             self.replenishPOI()
         self.schedule.step()
-        self.datacollector.collect(self)
         self.advanceFire()
+        self.datacollector.collect(self)
+
 
     # Verificación de los estatus del juego
     def victory(self):
