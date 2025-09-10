@@ -609,7 +609,6 @@ class FireRescueModel(Model):
             return
 
         else:
-            print("replenish poi")
             for _ in range(newPOIsNeeded):
                 # Tiramos los dados
                 self.rollDice()
@@ -618,7 +617,6 @@ class FireRescueModel(Model):
                 x, y = self.dice
                 if self.fires[y][x]:
                     self.fires[y][x] = 0
-                    print("Removed Fire")
 
                 # Si aún quedan fichas de ambos, se inicializa el POI al azar
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:
@@ -626,7 +624,6 @@ class FireRescueModel(Model):
                     x, y = self.dice
                     poi = Poi(self.dice, victim)
                     self.POIs[y, x] = poi
-                    print(f"New POI at {x}, {y}")
 
                 # Si solo hay víctimas, se inicializa como víctima
                 elif self.totalVictims > 0:

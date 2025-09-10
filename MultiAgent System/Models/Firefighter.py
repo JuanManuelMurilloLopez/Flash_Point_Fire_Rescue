@@ -315,7 +315,6 @@ class Firefighter(Agent):
 
         while not exitFound:
             if not queue:
-                print("False", queue)
                 return False, visited
 
             cell = queue.popleft()
@@ -326,7 +325,6 @@ class Firefighter(Agent):
                 return True, (x, y)
 
             if not (x, y) in visited:
-                print("No visitado", (x, y))
                 visited.add((x, y))
 
                 neighbors = self.model.grid.get_neighborhood(
@@ -335,7 +333,6 @@ class Firefighter(Agent):
                 for nX, nY in neighbors:
                     if self.__isValid(cells, (nX, nY)):
                         queue.append((nX, nY))
-                print(visited, queue)
 
     def selectFire(self):
         cells = self.model.fires
