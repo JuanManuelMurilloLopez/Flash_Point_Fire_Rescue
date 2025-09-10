@@ -7,12 +7,14 @@ public static class APIHelper
 {
     public static Response GetStep(int number)
     {
+        Debug.Log($"Fetching Webrequest {number}");
         HttpWebRequest request = (HttpWebRequest) WebRequest.Create($"http://localhost:5000/step/{number}");
         HttpWebResponse response = (HttpWebResponse) request.GetResponse();
 
         StreamReader reader = new StreamReader(response.GetResponseStream());
 
         string json = reader.ReadToEnd();
+        Debug.Log($"Response: {json}");
         
         return JsonUtility.FromJson<Response>(json);
     }

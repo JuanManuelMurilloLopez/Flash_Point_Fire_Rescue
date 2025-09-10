@@ -1,11 +1,25 @@
 using System.IO;
 using UnityEngine;
+using System.Threading.Tasks;
+
 public class PythonServer : MonoBehaviour
 {
     public float timer = 0.0f;
     private int count = 1;
     public GameObject[] players;
     private StoppingConditions stoppingConditions;
+
+    public GameObject smokePrefab;
+    public GameObject firePrefab;
+    public static GameObject smoke;
+    public static GameObject fire;
+
+    private void Awake() 
+    {
+        smoke = smokePrefab;
+        fire = firePrefab;
+    }
+
     void Start()
     {
         LoadStoppingConditions();
@@ -27,24 +41,24 @@ public class PythonServer : MonoBehaviour
             stoppingConditions = new StoppingConditions { maxIterations = 100 };
         }
     }
-    public void GetServerStep(int number)
+    async public void GetServerStep(int number)
     {
         if (stoppingConditions != null && number > stoppingConditions.maxIterations)
         {
             Debug.Log("Reached max steps, stopping simulation.");
             return; // Stop simulation here
         }
-        Response response = APIHelper.GetStep(number);
+        Response response = await Task.Run(() => APIHelper.GetStep(number));
         foreach (Player player in response.players)
         {
-            players[player.id].GetComponent<Movement>().HandleAction(player);
+            // players[player.id-1].GetComponent<Movement>().HandleAction(player);
         }
         foreach (Fire fire in response.fires)
         {
-            FireController.HandleFire(fire);
+            // FireController.HandleFire(fire);
         }
-        DamageController.instance.HandleDamage(response.damage);
-        DiceController.instance.HandleDices(response.dices);
+        // DamageController.instance.HandleDamage(response.damage);
+        // DiceController.instance.HandleDices(response.dices);
 
     }
     void Update()

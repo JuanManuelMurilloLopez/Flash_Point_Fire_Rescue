@@ -20,14 +20,17 @@ public class FireController : MonoBehaviour
 
   private static void CreateSmoke(Vector2 position)
   {
-
+    Vector3 newPos = new Vector3(position.x, 0, position.y);
+    Instantiate(PythonServer.smoke, newPos, Quaternion.identity);
   }
   private static void CreateFire(Vector2 position)
   {
-
+    Vector3 newPos = new Vector3(position.x, 0, position.y);
+    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
   }
   private static void CreateExplosion(Vector2 position)
   {
-
+    Vector3 newPos = new Vector3(position.x, 0, position.y);
+    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
   }
 }
