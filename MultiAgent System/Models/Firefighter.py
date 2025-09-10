@@ -19,7 +19,7 @@ class Firefighter(Agent):
         self.actions = []
 
     def step(self):
-
+        self.actions = []
         self.outOfBuilding()
         self.actions = []
 

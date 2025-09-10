@@ -57,7 +57,8 @@ class FireRescueModel(Model):
                 "DamageTokens": lambda model: model.damageTokens,
                 "ChangedPOIs": lambda model: model.changedPOI,
             },
-            agent_reporters={"Position": lambda fireFighter: fireFighter.pos},
+            agent_reporters={"Position": lambda fireFighter: fireFighter.pos,
+                             "Action": lambda fireFighter: fireFighter.actions},
         )
 
         # Variables para conocer el estatus del juego
@@ -588,6 +589,7 @@ class FireRescueModel(Model):
         self.schedule.step()
         self.round += 1
         self.advanceFire()
+        self.round += 1
         self.datacollector.collect(self)
 
     # Verificación de los estatus del juego

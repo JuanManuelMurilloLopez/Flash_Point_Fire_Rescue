@@ -1,0 +1,10 @@
+{
+  "maxIterations": 100,
+  "victoryConditions": {
+    "victimsRescued": 7
+  },
+  "defeatConditions": {
+    "victimsLost": 4,
+    "damageTokens": 24
+  }
+}

@@ -4,5 +4,6 @@ using UnityEngine;
 public class Player
 {
   public int id;
-  public Action[] actions;
+  public Action[] actions = new Action[0];
 }
+
