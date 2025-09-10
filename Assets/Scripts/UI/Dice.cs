@@ -14,6 +14,6 @@ public class Dice : MonoBehaviour
 
     public void ChangeSprite(int number)
     {
-        image.overrideSprite = spriteArray[number-1];
+        image.overrideSprite = spriteArray[number];
     }
 }
