@@ -48,7 +48,7 @@ class Firefighter(Agent):
             if len(possiblePositions):
                 options = np.random.permutation(len(possiblePositions))
                 for i in options:
-                    if self.move(options[i]):
+                    if self.move(possiblePositions[i]):
                         break
 
     def intelligentStrategy(self):
