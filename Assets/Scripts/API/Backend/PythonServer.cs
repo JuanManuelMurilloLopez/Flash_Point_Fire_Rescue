@@ -6,6 +6,7 @@ public class PythonServer : MonoBehaviour
 {
     public float timer = 0.0f;
     private int count = 1;
+    private bool canFetch = true;
     public GameObject[] players;
     private StoppingConditions stoppingConditions;
 
@@ -43,28 +44,37 @@ public class PythonServer : MonoBehaviour
     }
     async public void GetServerStep(int number)
     {
-        if (stoppingConditions != null && number > stoppingConditions.maxIterations)
+        if (canFetch)
         {
-            Debug.Log("Reached max steps, stopping simulation.");
-            return; // Stop simulation here
+            canFetch = false;
+            if (stoppingConditions != null && number > stoppingConditions.maxIterations)
+            {
+                Debug.Log("Reached max steps, stopping simulation.");
+                return; // Stop simulation here
+            }
+            Response response = await Task.Run(() => APIHelper.GetStep(number));
+            foreach (Player player in response.players)
+            {
+                // players[player.id-1].GetComponent<Movement>().HandleAction(player);
+            }
+            foreach (Fire fire in response.fires)
+            {
+                FireController.HandleFire(fire);
+            }
+            // DamageController.instance.HandleDamage(response.damage);
+            // DiceController.instance.HandleDices(response.dices);
+            canFetch = true;
         }
-        Response response = await Task.Run(() => APIHelper.GetStep(number));
-        foreach (Player player in response.players)
+        else 
         {
-            // players[player.id-1].GetComponent<Movement>().HandleAction(player);
+            number -= 1;
         }
-        foreach (Fire fire in response.fires)
-        {
-            // FireController.HandleFire(fire);
-        }
-        // DamageController.instance.HandleDamage(response.damage);
-        // DiceController.instance.HandleDices(response.dices);
 
     }
     void Update()
     {
         timer += Time.deltaTime;
-        if (timer >= 1.0f)
+        if (timer >= 5.0f)
         {
             timer = 0f;
             if (stoppingConditions == null || count <= stoppingConditions.maxIterations)

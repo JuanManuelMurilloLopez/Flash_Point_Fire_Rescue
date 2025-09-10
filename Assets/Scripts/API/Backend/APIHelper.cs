@@ -9,7 +9,9 @@ public static class APIHelper
     {
         Debug.Log($"Fetching Webrequest {number}");
         HttpWebRequest request = (HttpWebRequest) WebRequest.Create($"http://localhost:5000/step/{number}");
+        Debug.Log($"Created Request");
         HttpWebResponse response = (HttpWebResponse) request.GetResponse();
+        Debug.Log($"Response gotten");
 
         StreamReader reader = new StreamReader(response.GetResponseStream());
 
