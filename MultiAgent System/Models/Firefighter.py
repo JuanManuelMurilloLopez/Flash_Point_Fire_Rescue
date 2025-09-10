@@ -16,9 +16,10 @@ class Firefighter(Agent):
         self.strategy = strategy
         self.selectedStrategy = None
         self.id = id
+        self.actions = []
 
     def step(self):
-
+        self.actions = []
         self.outOfBuilding()
 
         if self.strategy == "random":
@@ -95,6 +96,8 @@ class Firefighter(Agent):
                 # Revisar si se necesita alguna interacción al moverse
                 self.checkPOI()
                 self.checkFire()
+                self.actions.append({"action": "move", "data": {"x": x, "y": y}})
+
             return True
 
         return False
@@ -197,6 +200,10 @@ class Firefighter(Agent):
         elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
             fire.smoke()
             self.actionPoints -= 1
+        x, y = position
+        self.actions.append({"action": action, "data": {"x": x, "y": y}})
+
+
 
     # Cambia el estado de la puerta (Si no está destruida)
     def openCloseDoor(self):
@@ -205,6 +212,7 @@ class Firefighter(Agent):
             cell = self.model.cells[y][x]
             if cell.hasDoor():
                 cell.changeDoorStatus()
+                self.actions.append({"action": "openDoor", "data": {"x": x, "y": y}})
                 self.actionPoints -= 1
         else:
             return
@@ -228,7 +236,7 @@ class Firefighter(Agent):
                 door = cell.doors[orientation]
                 if door:
                     door.destroy()
-
+                self.actions.append({"action": "chopWall", "direction":orientation})
                 self.actionPoints -= 1
 
     # Heuristic function to decide which strategy to use
@@ -432,7 +440,10 @@ class Firefighter(Agent):
 
     def __heuristics(_self, src, dest):
         sX, sY = src
-        dX, dY = dest
+        try:
+            dX, dY = dest
+        except:
+            print(dest)
         return (abs(sX - dX) + abs(sY - dY)) * 5
 
     def __isValid(self, matrix, position):

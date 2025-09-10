@@ -57,7 +57,8 @@ class FireRescueModel(Model):
                 "DamageTokens": lambda model: model.damageTokens,
                 "ChangedPOIs": lambda model: model.changedPOI,
             },
-            agent_reporters={"Position": lambda fireFighter: fireFighter.pos},
+            agent_reporters={"Position": lambda fireFighter: fireFighter.pos,
+                             "Action": lambda fireFighter: fireFighter.actions},
         )
 
         # Variables para conocer el estatus del juego
@@ -583,6 +584,7 @@ class FireRescueModel(Model):
             self.replenishPOI()
         self.schedule.step()
         self.advanceFire()
+        self.round += 1
         self.datacollector.collect(self)
 
 
@@ -610,10 +612,10 @@ class FireRescueModel(Model):
                 self.rollDice()
 
                 # Si hay fuego en la celda, eliminarlo antes de colocar el POI
-                for fire in list(self.fires):
-                    if fire.pos == self.dice and fire.state == "fire":
-                        self.fires.remove(fire)
-                        break
+                x, y = self.dice
+                if self.fires[y][x]:
+                    self.fires[y][x] = 0
+                    
 
                 # Si aún quedan fichas de ambos, se inicializa el POI al azar
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:

@@ -39,6 +39,7 @@ agents_by_step = {}
 for (step, agent_id), row in allAgentsInfo.iterrows():
     d = row.to_dict()
     d["AgentID"] = agent_id
+    d["Action"] = row["Action"]
     agents_by_step.setdefault(step, []).append(d)
 
 grids_by_step = {}
