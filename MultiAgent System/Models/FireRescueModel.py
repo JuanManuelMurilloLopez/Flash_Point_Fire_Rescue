@@ -57,8 +57,10 @@ class FireRescueModel(Model):
                 "DamageTokens": lambda model: model.damageTokens,
                 "ChangedPOIs": lambda model: model.changedPOI,
             },
-            agent_reporters={"Position": lambda fireFighter: fireFighter.pos,
-                             "Action": lambda fireFighter: fireFighter.actions},
+            agent_reporters={
+                "Position": lambda fireFighter: fireFighter.pos,
+                "Action": lambda fireFighter: fireFighter.actions,
+            },
         )
 
         # Variables para conocer el estatus del juego
