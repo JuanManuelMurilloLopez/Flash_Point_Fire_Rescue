@@ -111,6 +111,8 @@ class Firefighter(Agent):
             strategy = self.selectedStrategy
             print(self.id, ": ", self.actionPoints, strategy)
 
+            if strategy == None:
+                return
             # Check if player has finished strategy
             if len(strategy) <= 1:
                 if self.carryingVictim:
@@ -535,6 +537,9 @@ class Firefighter(Agent):
 
     def __strategyExtinguishFires(self):
         firePos = self.selectFire()
+        if not firePos:
+            return None
+        #     raise Exception("No fire found")
         _distance, strategy = self.safeRoute(firePos)
         return strategy
 
