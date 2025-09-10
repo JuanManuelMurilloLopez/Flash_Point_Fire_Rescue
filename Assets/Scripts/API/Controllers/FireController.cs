@@ -18,22 +18,19 @@ public class FireController : MonoBehaviour
     }
   }
 
-  private static void CreateSmoke(Vector2 position)
+  private static void CreateSmoke(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.smoke, newPos, Quaternion.identity);
-    Debug.Log($"Made smoke at: {newPos}");
+    Instantiate(PythonServer.smoke, position, Quaternion.identity);
+    Debug.Log($"Made smoke at: {position}");
   }
-  private static void CreateFire(Vector2 position)
+  private static void CreateFire(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
-    Debug.Log($"Made fire at: {newPos}");
+    Instantiate(PythonServer.fire, position, Quaternion.identity);
+    Debug.Log($"Made fire at: {position}");
   }
-  private static void CreateExplosion(Vector2 position)
+  private static void CreateExplosion(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
-    Debug.Log($"Made exploooosion! at: {newPos}");
+    Instantiate(PythonServer.fire, position, Quaternion.identity);
+    Debug.Log($"Made exploooosion! at: {position}");
   }
 }

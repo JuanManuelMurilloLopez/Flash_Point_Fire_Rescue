@@ -117,5 +117,4 @@ def step(stepNumber):
         "poi": poi,
         "damage": damage,
     }
-    print("Sending response:")
     return response

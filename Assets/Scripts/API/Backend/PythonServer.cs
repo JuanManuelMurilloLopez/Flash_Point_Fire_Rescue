@@ -74,7 +74,7 @@ public class PythonServer : MonoBehaviour
     void Update()
     {
         timer += Time.deltaTime;
-        if (timer >= 5.0f)
+        if (timer >= 10.0f)
         {
             timer = 0f;
             if (stoppingConditions == null || count <= stoppingConditions.maxIterations)
