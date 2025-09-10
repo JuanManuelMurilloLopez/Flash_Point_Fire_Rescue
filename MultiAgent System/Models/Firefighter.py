@@ -195,10 +195,8 @@ class Firefighter(Agent):
 
         # Rescatamos el fuego en la posición
         # fireAtPos = [f for f in self.model.fires if f.pos == position]
-        try:
-            fire = self.model.fires[position]
-        except:
-            raise Exception("Couldn't find fire at: ", position)
+        x, y = position
+        fire = self.model.fires[y][x]
 
         # Si no hay fuego no hacemos nada
         if fire == 0:
