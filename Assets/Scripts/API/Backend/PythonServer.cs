@@ -83,7 +83,7 @@ public class PythonServer : MonoBehaviour
 
             foreach (Fire fire in response.fires)
             {
-                //FireController.HandleFire(fire);
+                FireController.HandleFire(fire);
             }
             if (response.pois == null){
                 Debug.LogWarning("Response.poi is null");

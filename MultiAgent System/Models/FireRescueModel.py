@@ -586,11 +586,11 @@ class FireRescueModel(Model):
         if self.round != 0:
             self.advanceFire()
             self.replenishPOI()
+        self.datacollector.collect(self)
         self.schedule.step()
         self.round += 1
         self.advanceFire()
         self.round += 1
-        self.datacollector.collect(self)
 
     # Verificación de los estatus del juego
     def victory(self):
