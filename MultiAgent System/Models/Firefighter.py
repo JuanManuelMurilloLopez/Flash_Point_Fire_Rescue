@@ -109,7 +109,7 @@ class Firefighter(Agent):
     def useStrategy(self):
         while self.actionPoints > 0:
             strategy = self.selectedStrategy
-            print(self.id, ": ", self.actionPoints, strategy)
+            # print(self.id, ": ", self.actionPoints, strategy)
 
             if strategy == None:
                 return
@@ -298,31 +298,39 @@ class Firefighter(Agent):
                     queue.append((nX, nY))
 
     def selectExit(self):
+        # print("Select Exit")
         cells = self.model.cells
 
         exitFound = False
 
         queue = deque()
         queue.append(self.pos)
-        visited = set({self.pos})
+        visited = set()
 
         while not exitFound:
             if not queue:
-                return False
+                print("False", queue)
+                return False, visited
 
             cell = queue.popleft()
             x, y = cell
+            print(x, y)
 
             if (x, y) in self.model.entrances:
                 exitFound = True
-                return (x, y)
+                return True, (x, y)
 
-            neighbors = self.model.search(x, y)
+            if not (x, y) in visited:
+                print("No visitado", (x, y))
+                visited.add((x, y))
 
-            for nX, nY in neighbors:
-                if (nX, nY) not in visited and self.__isValid(cells, (nX, nY)):
-                    visited.add((nX, nY))
-                    queue.append((nX, nY))
+                neighbors = self.model.grid.get_neighborhood(
+                    (x, y), moore=False, include_center=False
+                )
+                for nX, nY in neighbors:
+                    if self.__isValid(cells, (nX, nY)):
+                        queue.append((nX, nY))
+                print(visited, queue)
 
     def selectFire(self):
         cells = self.model.fires
@@ -531,7 +539,9 @@ class Firefighter(Agent):
             return "left"
 
     def __getOut(self):
-        exitPos = self.selectExit()
+        found, exitPos = self.selectExit()
+        if not found:
+            raise Exception(exitPos)
         _distance, self.selectedStrategy = self.safeRoute(exitPos)
         return self.selectedStrategy
 
