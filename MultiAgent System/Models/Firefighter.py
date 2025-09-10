@@ -16,10 +16,12 @@ class Firefighter(Agent):
         self.strategy = strategy
         self.selectedStrategy = None
         self.id = id
+        self.actions = []
 
     def step(self):
 
         self.outOfBuilding()
+        self.actions = []
 
         if self.strategy == "random":
             self.randomStrategy()
@@ -51,13 +53,11 @@ class Firefighter(Agent):
 
     def intelligentStrategy(self):
         if self.selectedStrategy == None:
-
             if self.carryingVictim:
                 self.__getOut()
             else:
                 self.searchForPOIs()
-        else:
-            self.useStrategy()
+        self.useStrategy()
 
     # Handle player movement accounting for walls, doors, and AP spenditure
     def move(self, pos):
@@ -86,6 +86,9 @@ class Firefighter(Agent):
             elif self.model.cells[y][x].walls[direction]:
                 self.chopWall(direction)
 
+            elif self.model.fires[y][x]:
+                self.extinguishFire(pos)
+
             # Calculate required AP to walk based if carrying a victim
             requiredAP = (lambda self: 2 if self.carryingVictim else 1)(self)
             if self.actionPoints >= requiredAP:
@@ -95,6 +98,7 @@ class Firefighter(Agent):
                 # Revisar si se necesita alguna interacción al moverse
                 self.checkPOI()
                 self.checkFire()
+                self.actions.append({"action": "move", "data": {"x": x, "y": y}})
             return True
 
         return False
@@ -131,7 +135,9 @@ class Firefighter(Agent):
         poiPosition = self.selectPOI()
         # Return if there is no more POIs in map not selected
         if not poiPosition:
+            self.selectedStrategy = self.__strategyExtinguishFires()
             return
+
         safeStrategy = self.safeRoute(poiPosition)
         quickStrategy = self.quickRoute(poiPosition)
 
@@ -142,6 +148,7 @@ class Firefighter(Agent):
         _strategy, self.selectedStrategy = self.chooseStrategy(
             safeStrategy, quickStrategy
         )
+        return self.selectedStrategy
 
     # Revisar si en la posición del bombero hay un POI
     def checkPOI(self):
@@ -177,26 +184,30 @@ class Firefighter(Agent):
 
     # action -> "removeFire", "removeSmoke", "flipFire"
     # Apagar el fuego en la posición indicada
-    def extinguishFire(self, position, action):
+    def extinguishFire(self, position):
 
         # Rescatamos el fuego en la posición
         # fireAtPos = [f for f in self.model.fires if f.pos == position]
-        fire = self.model.POIs[position]
+        fire = self.model.fires[position]
 
         # Si no hay fuego no hacemos nada
         if fire == 0:
             return
 
+        action = ""
         # Procedimiento dependiendo de la acción, quitamos action points y eliminamos o modificamos el fuego
-        if fire.state == "smoke" and self.actionPoints >= 1 and action == "removeSmoke":
-            self.model.POIs[position] = 0
-            self.actionPoints -= 1
-        elif fire.state == "fire" and self.actionPoints >= 2 and action == "removeFire":
-            self.model.POIs[position] = 0
+        if fire.state == "fire" and self.actionPoints >= 2:
+            self.model.fires[position] = 0
             self.actionPoints -= 2
-        elif fire.state == "fire" and self.actionPoints >= 1 and action == "flipFire":
-            fire.smoke()
+            action = "removeFire"
+        elif fire.state == "smoke" and self.actionPoints >= 1:
+            self.model.fires[position] = 0
             self.actionPoints -= 1
+            action = "removeSmoke"
+
+        if action:
+            x, y = position
+            self.actions.append({"action": action, "data": {"x": x, "y": y}})
 
     # Cambia el estado de la puerta (Si no está destruida)
     def openCloseDoor(self):
@@ -205,6 +216,7 @@ class Firefighter(Agent):
             cell = self.model.cells[y][x]
             if cell.hasDoor():
                 cell.changeDoorStatus()
+                self.actions.append({"action": "openDoor", "data": {"x": x, "y": y}})
                 self.actionPoints -= 1
         else:
             return
@@ -228,6 +240,7 @@ class Firefighter(Agent):
                 door = cell.doors[orientation]
                 if door:
                     door.destroy()
+                self.actions.append({"action": "chopWall", "data": {"x": x, "y": y}})
 
                 self.actionPoints -= 1
 
@@ -298,9 +311,8 @@ class Firefighter(Agent):
             cell = queue.popleft()
             x, y = cell
 
-            if cells[y][x].isAccessPoint:
+            if (x, y) in self.model.entrances:
                 exitFound = True
-                self.model.POIsFound.add((x, y))
                 return (x, y)
 
             neighbors = self.model.search(x, y)
@@ -310,7 +322,39 @@ class Firefighter(Agent):
                     visited.add((nX, nY))
                     queue.append((nX, nY))
 
+    def selectFire(self):
+        cells = self.model.fires
+
+        fireFound = False
+
+        queue = deque()
+        queue.append(self.pos)
+        visited = set({self.pos})
+
+        while not fireFound:
+            if not queue:
+                return False
+
+            path = queue.popleft()
+            x, y = path
+
+            if cells[y][x]:
+                fireFound = True
+                return (x, y)
+
+            neighbors = self.model.search(x, y)
+
+            for nX, nY in neighbors:
+                if (nX, nY) not in visited and self.__isValid(cells, (nX, nY)):
+                    visited.add((nX, nY))
+                    queue.append((nX, nY))
+
+        return False
+
     def safeRoute(self, destination):
+        if not destination:
+            raise Exception(f"There is no destination: {destination}")
+
         n = (self.model.width + 2) * (self.model.height + 2)
         dist = [INFINITE] * n
         prev = [None] * n
@@ -370,6 +414,8 @@ class Firefighter(Agent):
         return dist[self.__toInt(destination)], path
 
     def quickRoute(self, destination):
+        if not destination:
+            raise Exception(f"There is no destination: {destination}")
         n = (self.model.width + 2) * (self.model.height + 2)
         dist = [INFINITE] * n
         prev = [None] * n
@@ -432,7 +478,10 @@ class Firefighter(Agent):
 
     def __heuristics(_self, src, dest):
         sX, sY = src
-        dX, dY = dest
+        try:
+            dX, dY = dest
+        except:
+            raise Exception("Error en heuristica", dest)
         return (abs(sX - dX) + abs(sY - dY)) * 5
 
     def __isValid(self, matrix, position):
@@ -482,6 +531,12 @@ class Firefighter(Agent):
     def __getOut(self):
         exitPos = self.selectExit()
         _distance, self.selectedStrategy = self.safeRoute(exitPos)
+        return self.selectedStrategy
+
+    def __strategyExtinguishFires(self):
+        firePos = self.selectFire()
+        _distance, strategy = self.safeRoute(firePos)
+        return strategy
 
     def __saveVictim(self):
         self.actionPoints -= 2
@@ -492,5 +547,4 @@ class Firefighter(Agent):
         for i in options:
             if self.model.grid.is_cell_empty(i):
                 self.model.grid.move_agent(self, i)
-                self.selectedStrategy = None
                 return

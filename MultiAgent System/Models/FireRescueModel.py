@@ -94,7 +94,7 @@ class FireRescueModel(Model):
                 self.cells[y][x].isAccessPoint = True
                 self.entrances.add((x, y))
             except:
-                print(
+                raise Exception(
                     f"Couldn't place acces in: {x, y}: {len(self.cells[0])}x{len(self.cells)}"
                 )
 
@@ -473,11 +473,13 @@ class FireRescueModel(Model):
             poiAtPos = self.POIs[y][x]
             if poiAtPos != 0:
                 poiAtPos.reveal()
-                self.changedPOI.append({
-                    "position": pos,
-                    "Rescued": poiAtPos.rescued,
-                    "Victim": poiAtPos.victim,
-                })
+                self.changedPOI.append(
+                    {
+                        "position": pos,
+                        "Rescued": poiAtPos.rescued,
+                        "Victim": poiAtPos.victim,
+                    }
+                )
                 if poiAtPos.victim == 1:
                     self.victimsLost += 1
                 self.POIs[y][x] = 0
@@ -500,7 +502,9 @@ class FireRescueModel(Model):
                                 neighbor = self.fires[ny, nx]
                                 if neighbor != 0 and neighbor.state == "fire":
                                     fire.fire()
-                                    self.newFires.append({"position": (x, y), "state": fire.state})
+                                    self.newFires.append(
+                                        {"position": (x, y), "state": fire.state}
+                                    )
 
                                     fireChanged = True
                                     break
@@ -582,9 +586,9 @@ class FireRescueModel(Model):
             self.advanceFire()
             self.replenishPOI()
         self.schedule.step()
+        self.round += 1
         self.advanceFire()
         self.datacollector.collect(self)
-
 
     # Verificación de los estatus del juego
     def victory(self):
@@ -605,21 +609,24 @@ class FireRescueModel(Model):
             return
 
         else:
+            print("replenish poi")
             for _ in range(newPOIsNeeded):
                 # Tiramos los dados
                 self.rollDice()
 
                 # Si hay fuego en la celda, eliminarlo antes de colocar el POI
-                for fire in list(self.fires):
-                    if fire.pos == self.dice and fire.state == "fire":
-                        self.fires.remove(fire)
-                        break
+                x, y = self.dice
+                if self.fires[y][x]:
+                    self.fires[y][x] = 0
+                    print("Removed Fire")
 
                 # Si aún quedan fichas de ambos, se inicializa el POI al azar
                 if self.totalVictims > 0 and self.totalFalseAlarms > 0:
                     victim = np.random.randint(0, 2)
+                    x, y = self.dice
                     poi = Poi(self.dice, victim)
-                    self.POIs[self.dice[1], self.dice[0]] = poi
+                    self.POIs[y, x] = poi
+                    print(f"New POI at {x}, {y}")
 
                 # Si solo hay víctimas, se inicializa como víctima
                 elif self.totalVictims > 0:

@@ -4,5 +4,6 @@ using UnityEngine;
 public class Action
 {
   public string action;
+  public string direction;
   public Vector3 data;
 }
