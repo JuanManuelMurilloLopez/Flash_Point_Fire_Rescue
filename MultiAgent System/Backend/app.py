@@ -84,6 +84,7 @@ def step(stepNumber):
     damage = grid.get("DamageTokens", 0)
     # Parse POIs
     pois_raw = grid.get("ChangedPOIs", [])
+    print("ChangedPOIs raw data:", pois_raw)
     if isinstance(pois_raw, str):
         import ast
 
@@ -114,7 +115,7 @@ def step(stepNumber):
         "players": players,
         "fires": fires,
         "dices": dices,
-        "poi": poi,
+        "pois": poi,
         "damage": damage,
     }
     print("Sending response:")

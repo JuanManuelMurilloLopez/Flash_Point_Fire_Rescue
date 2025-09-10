@@ -12,6 +12,10 @@ public class PythonServer : MonoBehaviour
 
     public GameObject smokePrefab;
     public GameObject firePrefab;
+    public GameObject victimAlivePrefab;
+    public GameObject victimRescuedPrefab;
+    public GameObject victimDeadPrefab;
+    public GameObject victimFakePrefab;
     public static GameObject smoke;
     public static GameObject fire;
 
@@ -19,6 +23,11 @@ public class PythonServer : MonoBehaviour
     {
         smoke = smokePrefab;
         fire = firePrefab;
+
+        VictimController.alivePrefab = victimAlivePrefab;
+        VictimController.rescuedPrefab = victimRescuedPrefab;
+        VictimController.deadPrefab = victimDeadPrefab;
+        VictimController.fakeVictimPrefab = victimFakePrefab;
     }
 
     void Start()
@@ -53,16 +62,54 @@ public class PythonServer : MonoBehaviour
                 return; // Stop simulation here
             }
             Response response = await Task.Run(() => APIHelper.GetStep(number));
-            foreach (Player player in response.players)
+            if (response != null && response.players != null)
             {
-                // players[player.id-1].GetComponent<Movement>().HandleAction(player);
+                foreach (Player player in response.players)
+                {
+                    if (players != null && players.Length >= player.id)
+                    {
+                        players[player.id - 1].GetComponent<Movement>().HandleAction(player);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Player id {player.id} is out of range or players array not assigned.");
+                    }
+                }
             }
+            else
+            {
+                Debug.LogError("Response or response.players is null.");
+            }
+
             foreach (Fire fire in response.fires)
             {
-                FireController.HandleFire(fire);
+                //FireController.HandleFire(fire);
             }
-            // DamageController.instance.HandleDamage(response.damage);
-            // DiceController.instance.HandleDices(response.dices);
+            if (response.pois == null){
+                Debug.LogWarning("Response.poi is null");
+            }
+            else if (response.pois.Length == 0){
+                Debug.Log("No POIs this step");
+            }
+            else {
+                foreach (var poiData in response.pois)
+                {
+                    Victim victim = new Victim
+                    {
+                        victim = poiData.victim,   // true if not fake
+                        rescued = poiData.rescued, 
+                        lost = !poiData.rescued,
+                        position = new Position
+                        {
+                            x = poiData.position.x,
+                            z = poiData.position.y
+                        }
+                    };
+                    VictimController.HandleVictim(victim);
+                }
+            }
+            DamageController.instance.HandleDamage(response.damage);
+            DiceController.instance.HandleDices(response.dices);
             canFetch = true;
         }
         else 
