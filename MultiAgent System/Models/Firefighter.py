@@ -50,6 +50,8 @@ class Firefighter(Agent):
                 for i in options:
                     if self.move(possiblePositions[i]):
                         break
+                    else:
+                        return
 
     def intelligentStrategy(self):
         if self.selectedStrategy == None:
@@ -99,7 +101,10 @@ class Firefighter(Agent):
                 self.checkPOI()
                 self.checkFire()
                 self.actions.append({"action": "move", "data": {"x": x, "y": y}})
-            return True
+
+                return True
+            else:
+                return False
 
         return False
 
@@ -190,7 +195,10 @@ class Firefighter(Agent):
 
         # Rescatamos el fuego en la posición
         # fireAtPos = [f for f in self.model.fires if f.pos == position]
-        fire = self.model.fires[position]
+        try:
+            fire = self.model.fires[position]
+        except:
+            raise Exception("Couldn't find fire at: ", position)
 
         # Si no hay fuego no hacemos nada
         if fire == 0:
@@ -244,7 +252,7 @@ class Firefighter(Agent):
                     door.destroy()
                 self.actions.append({"action": "chopWall", "data": {"x": x, "y": y}})
 
-                self.actionPoints -= 1
+                self.actionPoints -= 2
 
     # Heuristic function to decide which strategy to use
     def chooseStrategy(self, safeStrategy, quickStrategy):
@@ -314,7 +322,6 @@ class Firefighter(Agent):
 
             cell = queue.popleft()
             x, y = cell
-            print(x, y)
 
             if (x, y) in self.model.entrances:
                 exitFound = True
