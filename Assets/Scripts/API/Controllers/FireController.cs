@@ -1,39 +1,62 @@
 using UnityEngine;
+using System.Collections;
 
 public class FireController : MonoBehaviour
 {
+  private static FireController instance;
+
+  private void Awake()
+  {
+    instance = this;
+  }
+
   public static void HandleFire(Fire fire)
   {
+
+    Vector3 newPosition = GridController.positionToGrid(fire.position);
     if (fire.state == "smoke")
     {
-      CreateSmoke(fire.position);
+      CreateSmoke(newPosition);
     }
     else if (fire.state == "fire")
     {
-      CreateFire(fire.position);
+      CreateFire(newPosition);
     }
     else if (fire.state == "explosion")
     {
-      CreateExplosion(fire.position);
+      CreateExplosion(newPosition);
     }
   }
 
-  private static void CreateSmoke(Vector2 position)
+  private static void CreateSmoke(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.smoke, newPos, Quaternion.identity);
-    Debug.Log($"Made smoke at: {newPos}");
+    Instantiate(PythonServer.smoke, position, Quaternion.identity);
   }
-  private static void CreateFire(Vector2 position)
+  private static void CreateFire(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
-    Debug.Log($"Made fire at: {newPos}");
+    Instantiate(PythonServer.fire, position, Quaternion.identity);
   }
-  private static void CreateExplosion(Vector2 position)
+  private static void CreateExplosion(Vector3 position)
   {
-    Vector3 newPos = new Vector3(position.x, 0, position.y);
-    Instantiate(PythonServer.fire, newPos, Quaternion.identity);
-    Debug.Log($"Made exploooosion! at: {newPos}");
+    GameObject fire = Instantiate(PythonServer.fire, position, Quaternion.identity);
+    Debug.Log("Explosion!");
+    instance.StartCoroutine(instance.Explosion(fire));
+  }
+
+  private IEnumerator Explosion(GameObject fire)
+  {
+    Vector3 startScale = fire.transform.localScale;
+    Vector3 endScale = Vector3.one * 1.5f;
+    float elapsed = 0f;
+    float duration = 0.5f;
+
+    while (elapsed < duration) {
+        float t = elapsed / duration;
+        fire.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+        elapsed += Time.deltaTime;
+        yield return null;
+    }
+
+    Destroy(fire);
   }
 }
