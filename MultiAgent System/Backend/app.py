@@ -38,6 +38,7 @@ while not (model.defeat()) and not (model.victory()) and i < ITERATIONS:
 allAgentsInfo = model.datacollector.get_agent_vars_dataframe()
 allGrids = model.datacollector.get_model_vars_dataframe()
 
+
 agents_by_step = {}
 for (step, agent_id), row in allAgentsInfo.iterrows():
     d = row.to_dict()
@@ -84,7 +85,7 @@ def step(stepNumber):
     damage = grid.get("DamageTokens", 0)
     # Parse POIs
     pois_raw = grid.get("ChangedPOIs", [])
-    print("ChangedPOIs raw data:", pois_raw)
+
     if isinstance(pois_raw, str):
         import ast
 
