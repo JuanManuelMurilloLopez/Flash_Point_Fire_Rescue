@@ -14,19 +14,19 @@ public class VictimController : MonoBehaviour
     public static void HandleVictim(Victim victim)
     {
         Vector3 gridPos = GridController.positionToGrid(new Vector3(victim.position.x, 0f, victim.position.z));
-        Vector3 baseAmbulancePos = new Vector3(-4f, 0, -10f);
-        Vector3 baseRescuedPos = new Vector3(4f, 0, -10f);
+        Vector3 deadPos = new Vector3(4f, 0.3f, -10.5f);
+        Vector3 rescuedPos = new Vector3(-11f, 0, -6f);
 
         Vector3 spawnPos;
 
         switch (victim.state)
         {
             case "dead":
-                spawnPos = baseAmbulancePos + new Vector3(deadVictimCount * 1f, 0, 0);
+                spawnPos = deadPos + new Vector3(deadVictimCount * 1f, 0, 0);
                 deadVictimCount++;
                 break;
             case "rescued":
-                spawnPos = baseRescuedPos + new Vector3(rescuedVictimCount * 1f, 0, 0);
+                spawnPos = rescuedPos + new Vector3(rescuedVictimCount * 1f, 0, 0);
                 rescuedVictimCount++;
                 break;
             default:
@@ -34,11 +34,11 @@ public class VictimController : MonoBehaviour
                 break;
         }
 
-        if (victimObjects.ContainsKey(spawnPos))
+        if (victimObjects.ContainsKey(gridPos))
         {
-            GameObject oldObj = victimObjects[spawnPos];
+            GameObject oldObj = victimObjects[gridPos];
             GameObject.Destroy(oldObj);
-            victimObjects.Remove(spawnPos);
+            victimObjects.Remove(gridPos);
         }
 
         GameObject prefabToInstantiate = null;
