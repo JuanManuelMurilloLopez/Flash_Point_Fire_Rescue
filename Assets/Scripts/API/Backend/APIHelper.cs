@@ -21,6 +21,15 @@ public static class APIHelper
         catch
         {
             Debug.Log("Error, no more steps");
+            if (StepLoader.Instance != null)
+            {
+                StepLoader.Instance.ShowEndOfSimulationMessage();
+            }
+
+            else
+            {
+                Debug.LogWarning("StepLoader instance not found!");
+            }
             return JsonUtility.FromJson<Response>("{finished: true}");
         }
     }

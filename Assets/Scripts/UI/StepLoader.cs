@@ -1,35 +1,38 @@
-using UnityEngine;
-using UnityEngine.Networking;
 using TMPro;
-using System.Collections;
+using UnityEngine;
 
 public class StepLoader : MonoBehaviour
 {
-    public TMP_Text messageText;  
+    public static StepLoader Instance { get; private set; }
 
-    public IEnumerator LoadStep(int stepNumber)
+    public TMP_Text messageText;
+    private bool showEndMessage = false;
+
+    private void Awake()
     {
-        string url = $"http://localhost:5000/step/{stepNumber}";
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+        if (Instance == null)
         {
-            if (request.responseCode == 404)
-            {
-                
-                messageText.text = $"End of simulation.";
-                messageText.gameObject.SetActive(true);
-            }
-            else
-            {
-                messageText.text = $"Error: {request.error}";
-                messageText.gameObject.SetActive(true);
-            }
+            Instance = this;
+            // Optional: DontDestroyOnLoad(gameObject);
         }
         else
         {
-            messageText.gameObject.SetActive(false);
+            Destroy(gameObject); // Ensure only one instance exists
+        }
+    }
+
+    public void ShowEndOfSimulationMessage()
+    {
+        showEndMessage = true;
+    }
+
+    private void Update()
+    {
+        if (showEndMessage)
+        {
+            messageText.text = "End of simulation.";
+            messageText.gameObject.SetActive(true);
+            showEndMessage = false;
         }
     }
 }
