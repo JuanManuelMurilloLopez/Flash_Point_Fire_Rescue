@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 public class PythonServer : MonoBehaviour
 {
     public float timer = 0.0f;
-    private int count = 1;
+    private int count = 0;
     private bool canFetch = true;
     public GameObject[] players;
     private StoppingConditions stoppingConditions;
@@ -33,7 +33,7 @@ public class PythonServer : MonoBehaviour
     void Start()
     {
         LoadStoppingConditions();
-        GetServerStep(count++);
+        GetServerStep(count);
     }
     void LoadStoppingConditions()
     {
@@ -62,6 +62,7 @@ public class PythonServer : MonoBehaviour
                 return; // Stop simulation here
             }
             Response response = await Task.Run(() => APIHelper.GetStep(number));
+            
             if (response != null && response.players != null)
             {
                 foreach (Player player in response.players)
@@ -126,7 +127,8 @@ public class PythonServer : MonoBehaviour
             timer = 0f;
             if (stoppingConditions == null || count <= stoppingConditions.maxIterations)
             {
-                GetServerStep(count++);
+                count+=1;
+                GetServerStep(count);
             }
             else
             {
