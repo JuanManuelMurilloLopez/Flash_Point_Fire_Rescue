@@ -120,6 +120,7 @@ class FireRescueModel(Model):
                         "position": (x, y),
                         "Rescued": False,
                         "Victim": poiData[2],
+                        "State": "alive" if poiData[2] else "fake"
                     }
                 )
 
@@ -211,7 +212,9 @@ class FireRescueModel(Model):
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                    PoiAtPos.lose()
                     PoiAtPos.state == "dead"
+                    print(f"POI at {self.dice} lost, state now: {PoiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": self.dice,
@@ -220,8 +223,8 @@ class FireRescueModel(Model):
                         "State": PoiAtPos.state,
                     }
                 )
-                self.POIs[self.dice[1], self.dice[0]] = 0
                 self.activePois -= 1
+                self.POIs[self.dice[1], self.dice[0]] = 0
 
         else:
             fire = firesAtPos
@@ -278,7 +281,9 @@ class FireRescueModel(Model):
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                    PoiAtPos.lose()
                     PoiAtPos.state == "dead"
+                    print(f"POI at {upPos} lost, state now: {PoiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": upPos,
@@ -287,8 +292,8 @@ class FireRescueModel(Model):
                         "State": PoiAtPos.state,
                     }
                 )
-                self.POIs[upPos[1], upPos[0]] = 0
                 self.activePois -= 1
+                self.POIs[upPos[1], upPos[0]] = 0
 
         ### Abajo ###
         downPos = (pos[0], pos[1] - 1)
@@ -332,7 +337,9 @@ class FireRescueModel(Model):
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                    PoiAtPos.lose()
                     PoiAtPos.state == "dead"
+                    print(f"POI at {downPos} lost, state now: {PoiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": downPos,
@@ -341,8 +348,8 @@ class FireRescueModel(Model):
                         "State": PoiAtPos.state,
                     }
                 )
-                self.POIs[downPos[1], downPos[0]] = 0
                 self.activePois -= 1
+                self.POIs[downPos[1], downPos[0]] = 0
 
         ### Derecha ###
         rPos = (pos[0] + 1, pos[1])
@@ -386,7 +393,9 @@ class FireRescueModel(Model):
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                    PoiAtPos.lose()
                     PoiAtPos.state == "dead"
+                    print(f"POI at {rPos} lost, state now: {PoiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": rPos,
@@ -395,8 +404,8 @@ class FireRescueModel(Model):
                         "State": PoiAtPos.state,
                     }
                 )
-                self.POIs[rPos[1], rPos[0]] = 0
                 self.activePois -= 1
+                self.POIs[rPos[1], rPos[0]] = 0
 
         ### Izquierda ###
         lPos = (pos[0] - 1, pos[1])
@@ -440,7 +449,9 @@ class FireRescueModel(Model):
                 PoiAtPos.reveal()
                 if PoiAtPos.victim == 1:
                     self.victimsLost += 1
+                    PoiAtPos.lose()
                     PoiAtPos.state == "dead"
+                    print(f"POI at {lPos} lost, state now: {PoiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": lPos,
@@ -449,8 +460,8 @@ class FireRescueModel(Model):
                         "State": PoiAtPos.state,
                     }
                 )
-                self.POIs[lPos[1], lPos[0]] = 0
                 self.activePois -= 1
+                self.POIs[lPos[1], lPos[0]] = 0
 
     def shockwave(self, pos, direction):
         # Mapear direcciones a vectores
@@ -506,7 +517,9 @@ class FireRescueModel(Model):
                 poiAtPos.reveal()
                 if poiAtPos.victim == 1:
                     self.victimsLost += 1
+                    poiAtPos.lose()
                     poiAtPos.state == "dead"
+                    print(f"POI at {pos} lost, state now: {poiAtPos.state}")
                 self.changedPOI.append(
                     {
                         "position": pos,
@@ -515,8 +528,8 @@ class FireRescueModel(Model):
                         "State": poiAtPos.state,
                     }
                 )
-                self.POIs[y][x] = 0
                 self.activePois -= 1
+                self.POIs[y][x] = 0
 
     def flashover(self):
         fireChanged = True

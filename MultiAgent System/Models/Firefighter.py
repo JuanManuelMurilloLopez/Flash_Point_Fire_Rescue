@@ -169,6 +169,8 @@ class Firefighter(Agent):
             # Si el POI es una víctima, la recuperamos
             if poiAtPos.victim == 1:
                 self.carryingVictim = True
+                poiAtPos.rescue()
+                poiAtPos.state == "rescued"
                 print("Found a Victim at ", (x, y), "!")
             # Si el POI era una falsa alarma, la eliminamos
             elif poiAtPos.victim == 0:

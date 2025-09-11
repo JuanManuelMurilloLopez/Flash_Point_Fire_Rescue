@@ -91,7 +91,7 @@ def step(stepNumber):
     damage = grid.get("DamageTokens", 0)
     # Parse POIs
     pois_raw = grid.get("ChangedPOIs", [])
-    print(pois_raw)
+    print("POIS RAW", pois_raw)
     if isinstance(pois_raw, str):
         import ast
 
@@ -99,14 +99,7 @@ def step(stepNumber):
     poi = []
     for p in pois_raw:
         pos = p.get("position", (None, None))
-        if p.get("Victim", 0) == 0:
-            state = "fake"
-        elif p.get("Victim", 0) == 1 and not p.get("Rescued", False):
-            state = "alive"
-        elif p.get("Victim", 0) == 1 and p.get("Rescued", False):
-            state = "rescued"
-        else:
-            state = "dead"
+        state = p.get("State")
         poi.append({"state": state, "position": {"x": pos[0], "z": pos[1]}})
     players = []
     for agent_data in agents:

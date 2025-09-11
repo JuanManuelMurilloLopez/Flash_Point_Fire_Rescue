@@ -110,7 +110,7 @@ public class PythonServer : MonoBehaviour
                         }
                     };
                     VictimController.HandleVictim(victim);
-                    Debug.Log($"Victim at ({poiData.position.x}, {poiData.position.y}), victim: {poiData.victim}, rescued: {poiData.rescued}");
+                    Debug.Log($"Victim at ({poiData.position.x}, {poiData.position.y}), state {poiData.state}");
                 }
             }
             DamageController.instance.HandleDamage(response.damage);
