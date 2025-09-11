@@ -47,7 +47,6 @@ public class PythonServer : MonoBehaviour
         else
         {
             Debug.LogError("StoppingConditions.json not found!");
-            // Provide default values if needed
             stoppingConditions = new StoppingConditions { maxIterations = 100 };
         }
     }
@@ -59,7 +58,7 @@ public class PythonServer : MonoBehaviour
             if (stoppingConditions != null && number > stoppingConditions.maxIterations)
             {
                 Debug.Log("Reached max steps, stopping simulation.");
-                return; // Stop simulation here
+                return; 
             }
             Response response = await Task.Run(() => APIHelper.GetStep(number));
             
@@ -98,7 +97,7 @@ public class PythonServer : MonoBehaviour
                     Debug.Log($"PoiData: {poiData.victim} {poiData.rescued} {poiData.state} {poiData.position}");
                     Victim victim = new Victim
                     {
-                        victim = poiData.victim,   // true if not fake
+                        victim = poiData.victim,   
                         rescued = poiData.rescued, 
                         state = poiData.state,
                         //lost = !poiData.rescued,
