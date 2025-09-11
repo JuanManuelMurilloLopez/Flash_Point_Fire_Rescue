@@ -8,17 +8,39 @@ public class VictimController : MonoBehaviour
     public static GameObject fakeVictimPrefab;
 
     private static Dictionary<Vector3, GameObject> victimObjects = new Dictionary<Vector3, GameObject>();
+    private static int deadVictimCount = 0;
+    private static int rescuedVictimCount = 0;
+
     public static void HandleVictim(Victim victim)
     {
-        Debug.Log($"VICTIM IN VICTIMCONTROLLER {victim.state}");
-        Vector3 newPos = GridController.positionToGrid(new Vector3(victim.position.x, 0f, victim.position.z));
+        Vector3 gridPos = GridController.positionToGrid(new Vector3(victim.position.x, 0f, victim.position.z));
+        Vector3 baseAmbulancePos = new Vector3(-4f, 0, -10f);
+        Vector3 baseRescuedPos = new Vector3(4f, 0, -10f);
 
-        if (victimObjects.ContainsKey(newPos))
+        Vector3 spawnPos;
+
+        switch (victim.state)
         {
-            GameObject oldObj = victimObjects[newPos];
-            GameObject.Destroy(oldObj);
-            victimObjects.Remove(newPos);
+            case "dead":
+                spawnPos = baseAmbulancePos + new Vector3(deadVictimCount * 1f, 0, 0);
+                deadVictimCount++;
+                break;
+            case "rescued":
+                spawnPos = baseRescuedPos + new Vector3(rescuedVictimCount * 1f, 0, 0);
+                rescuedVictimCount++;
+                break;
+            default:
+                spawnPos = gridPos;
+                break;
         }
+
+        if (victimObjects.ContainsKey(spawnPos))
+        {
+            GameObject oldObj = victimObjects[spawnPos];
+            GameObject.Destroy(oldObj);
+            victimObjects.Remove(spawnPos);
+        }
+
         GameObject prefabToInstantiate = null;
         switch (victim.state)
         {
@@ -38,14 +60,17 @@ public class VictimController : MonoBehaviour
                 Debug.LogWarning($"Unknown victim state: {victim.state}");
                 break;
         }
+
         if (prefabToInstantiate != null)
         {
-            GameObject newObj = Instantiate(prefabToInstantiate, newPos, prefabToInstantiate.transform.rotation);
-            victimObjects[newPos] = newObj;
-            Debug.Log($"Created {victim.state} victim at {newPos}");
+            GameObject newObj = Instantiate(prefabToInstantiate, spawnPos, prefabToInstantiate.transform.rotation);
+            victimObjects[spawnPos] = newObj;
+            Debug.Log($"Created {victim.state} victim at {spawnPos}");
         }
     }
 }
+
+
 public class Victim
 {
     public Vector3 position;
