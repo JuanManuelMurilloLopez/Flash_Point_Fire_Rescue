@@ -55,7 +55,7 @@ public class PythonServer : MonoBehaviour
             Response response = await Task.Run(() => APIHelper.GetStep(number));
             foreach (Player player in response.players)
             {
-                // players[player.id-1].GetComponent<Movement>().HandleAction(player);
+                players[player.id-1].GetComponent<Movement>().HandleAction(player);
             }
             foreach (Fire fire in response.fires)
             {
@@ -63,6 +63,7 @@ public class PythonServer : MonoBehaviour
             }
             // DamageController.instance.HandleDamage(response.damage);
             // DiceController.instance.HandleDices(response.dices);
+            
             canFetch = true;
         }
         else 
@@ -74,7 +75,7 @@ public class PythonServer : MonoBehaviour
     void Update()
     {
         timer += Time.deltaTime;
-        if (timer >= 10.0f)
+        if (timer >= 5.0f)
         {
             timer = 0f;
             if (stoppingConditions == null || count <= stoppingConditions.maxIterations)

@@ -14,5 +14,6 @@ public static class APIHelper
             string json = reader.ReadToEnd();
             return JsonUtility.FromJson<Response>(json);
         }
+        // ChatGPT corrigio esta parte de codigo añadiendo lo de using porque no se cerraba la conexión
     }
 }

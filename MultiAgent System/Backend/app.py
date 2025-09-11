@@ -100,14 +100,14 @@ def step(stepNumber):
         else:
             state = "dead"
         poi.append({"state": state, "position": {"x": pos[0], "z": pos[1]}})
-    # Build players list with id and position only
     players = []
     for agent_data in agents:
         pos = agent_data.get("Position", (None, None))
+        actions = agent_data.get("Action", None)
         player = {
-            "id": agent_data.get("AgentID"),  # You may need to pass AgentID explicitly
+            "id": agent_data.get("AgentID"),
             "position": {"x": pos[0], "z": pos[1]},
-            # No actions or state available currently
+            "actions": actions,
         }
         players.append(player)
     response = {
@@ -117,4 +117,5 @@ def step(stepNumber):
         "poi": poi,
         "damage": damage,
     }
+
     return response
