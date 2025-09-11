@@ -40,7 +40,7 @@ public class VictimController : MonoBehaviour
         }
         if (prefabToInstantiate != null)
         {
-            GameObject newObj = Instantiate(prefabToInstantiate, newPos, Quaternion.identity);
+            GameObject newObj = Instantiate(prefabToInstantiate, newPos, prefabToInstantiate.transform.rotation);
             victimObjects[newPos] = newObj;
             Debug.Log($"Created {victim.state} victim at {newPos}");
         }
