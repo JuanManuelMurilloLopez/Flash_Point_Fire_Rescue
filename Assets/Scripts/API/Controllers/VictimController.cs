@@ -15,7 +15,7 @@ public class VictimController : MonoBehaviour
     {
         Vector3 gridPos = GridController.positionToGrid(new Vector3(victim.position.x, 0f, victim.position.z));
         Vector3 deadPos = new Vector3(4f, 0.3f, -10.5f);
-        Vector3 rescuedPos = new Vector3(-11f, 0, -6f);
+        Vector3 rescuedPos = new Vector3(-11f, 0, -4f);
 
         Vector3 spawnPos;
 
