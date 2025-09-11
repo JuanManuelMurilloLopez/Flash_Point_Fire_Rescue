@@ -115,6 +115,14 @@ class FireRescueModel(Model):
             x, y = poiData[0], poiData[1]
             poi = Poi((x, y), poiData[2])
             self.POIs[y][x] = poi
+            self.changedPOI.append(
+                    {
+                        "position": (x, y),
+                        "Rescued": False,
+                        "Victim": poiData[2],
+                    }
+                )
+
 
         self.POIsFound = set()
 
@@ -132,6 +140,12 @@ class FireRescueModel(Model):
         for pos in board["fireLocations"]:
             fire = Fire(pos, state="fire")
             self.fires[pos[1]][pos[0]] = fire
+            self.newFires.append(
+                {
+                    "position": (x, y),
+                    "state": "fire"
+                }
+            )
 
         # Añadimos el fuego inicial
         """self.fires = []
@@ -159,6 +173,8 @@ class FireRescueModel(Model):
             fireFighter = Firefighter(self, self.strategy, i)
             self.grid.place_agent(fireFighter, pos)
             self.schedule.add(fireFighter)
+        
+
 
     # Método utilizado para simular el tirado de dados
     def rollDice(self):
@@ -191,15 +207,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    PoiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": self.dice,
                         "Rescued": PoiAtPos.rescued,
                         "Victim": PoiAtPos.victim,
+                        "State": PoiAtPos.state,
                     }
                 )
-                if PoiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[self.dice[1], self.dice[0]] = 0
                 self.activePois -= 1
 
@@ -256,15 +274,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    PoiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": upPos,
                         "Rescued": PoiAtPos.rescued,
                         "Victim": PoiAtPos.victim,
+                        "State": PoiAtPos.state,
                     }
                 )
-                if PoiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[upPos[1], upPos[0]] = 0
                 self.activePois -= 1
 
@@ -308,15 +328,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    PoiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": downPos,
                         "Rescued": PoiAtPos.rescued,
                         "Victim": PoiAtPos.victim,
+                        "State": PoiAtPos.state,
                     }
                 )
-                if PoiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[downPos[1], downPos[0]] = 0
                 self.activePois -= 1
 
@@ -360,15 +382,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    PoiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": rPos,
                         "Rescued": PoiAtPos.rescued,
                         "Victim": PoiAtPos.victim,
+                        "State": PoiAtPos.state,
                     }
                 )
-                if PoiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[rPos[1], rPos[0]] = 0
                 self.activePois -= 1
 
@@ -412,15 +436,17 @@ class FireRescueModel(Model):
             if PoiAtPos != 0:
                 # Revelamos el POI y si era una víctima la añadimos a las perdidas
                 PoiAtPos.reveal()
+                if PoiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    PoiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": lPos,
                         "Rescued": PoiAtPos.rescued,
                         "Victim": PoiAtPos.victim,
+                        "State": PoiAtPos.state,
                     }
                 )
-                if PoiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[lPos[1], lPos[0]] = 0
                 self.activePois -= 1
 
@@ -476,15 +502,17 @@ class FireRescueModel(Model):
             poiAtPos = self.POIs[y][x]
             if poiAtPos != 0:
                 poiAtPos.reveal()
+                if poiAtPos.victim == 1:
+                    self.victimsLost += 1
+                    poiAtPos.state == "dead"
                 self.changedPOI.append(
                     {
                         "position": pos,
                         "Rescued": poiAtPos.rescued,
                         "Victim": poiAtPos.victim,
+                        "State": poiAtPos.state,
                     }
                 )
-                if poiAtPos.victim == 1:
-                    self.victimsLost += 1
                 self.POIs[y][x] = 0
                 self.activePois -= 1
 

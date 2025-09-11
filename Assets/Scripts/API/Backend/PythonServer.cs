@@ -94,18 +94,22 @@ public class PythonServer : MonoBehaviour
             else {
                 foreach (var poiData in response.pois)
                 {
+                    Debug.Log($"PoiData: {poiData.victim} {poiData.rescued} {poiData.state} {poiData.position}");
                     Victim victim = new Victim
                     {
                         victim = poiData.victim,   // true if not fake
                         rescued = poiData.rescued, 
-                        lost = !poiData.rescued,
-                        position = new Position
+                        state = poiData.state,
+                        //lost = !poiData.rescued,
+                        position = new Vector3
                         {
                             x = poiData.position.x,
-                            z = poiData.position.y
+                            y = 0,
+                            z = poiData.position.z
                         }
                     };
                     VictimController.HandleVictim(victim);
+                    Debug.Log($"Victim at ({poiData.position.x}, {poiData.position.y}), victim: {poiData.victim}, rescued: {poiData.rescued}");
                 }
             }
             DamageController.instance.HandleDamage(response.damage);
