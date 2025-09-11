@@ -66,7 +66,7 @@ public void HandleAction(Player player)
             if (collision.tag == "Door")
             {
                 Debug.Log("Open Up!! OPEN UPPP!!!!!");
-                Destroy(collision)
+                Destroy(collision);
             }
         }
     }
