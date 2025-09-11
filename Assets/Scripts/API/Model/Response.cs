@@ -7,6 +7,7 @@ public class Response
   public Fire[] fires;
   public POI[] pois;
   public Dices dices;
+  public bool finished = false;
   public int damage;
 
 }

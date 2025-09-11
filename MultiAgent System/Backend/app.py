@@ -55,10 +55,16 @@ for step, row in allGrids.iterrows():
 def step(stepNumber):
     agents = agents_by_step.get(stepNumber)
     grid = grids_by_step.get(stepNumber)
-    if agents is None or grid is None:
+    if agents is None:
         from flask import abort
 
-        abort(404, description=f"Step {stepNumber} not found")
+        print(f"Step agent {stepNumber} not found")
+        abort(404, description=f"Step agent {stepNumber} not found")
+    if grid is None:
+        from flask import abort
+
+        print(f"Step grid {stepNumber} not found")
+        abort(404, description=f"Step grid {stepNumber} not found")
     # Parse fires
     fires_raw = grid.get("NewFire", [])
     if isinstance(fires_raw, str):

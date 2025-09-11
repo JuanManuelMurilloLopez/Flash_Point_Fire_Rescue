@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using System.Linq;
 
 public class Movement : MonoBehaviour
 {
@@ -52,7 +53,22 @@ public void HandleAction(Player player)
 
     private void OpenDoorAt(Vector3 doorPos)
     {
-        // Implement door opening logic here
+        // Debug.Log("Open Door");
+        // Debug.Log(transform.position);
+        GameObject[] collidedGameObjects = 
+            Physics.OverlapSphere(transform.position, 2)
+            .Except(new [] {GetComponent<Collider>()})
+            .Select(c=>c.gameObject)
+            .ToArray();
+
+        foreach (GameObject collision in collidedGameObjects)
+        {
+            if (collision.tag == "Door")
+            {
+                Debug.Log("Open Up!! OPEN UPPP!!!!!");
+                Destroy(collision);
+            }
+        }
     }
     private void ExtinguishFireAt(Vector3 firePos, string action)
     {

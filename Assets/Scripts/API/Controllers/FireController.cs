@@ -34,7 +34,7 @@ public class FireController : MonoBehaviour
   }
   private static void CreateFire(Vector3 position)
   {
-    Instantiate(PythonServer.fire, position, Quaternion.identity);
+    GameObject fire = Instantiate(PythonServer.fire, position, Quaternion.identity);
   }
   private static void CreateExplosion(Vector3 position)
   {
