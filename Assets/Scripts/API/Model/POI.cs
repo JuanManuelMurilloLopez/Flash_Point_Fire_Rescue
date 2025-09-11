@@ -5,5 +5,6 @@ public class POI
 {
   public bool rescued = false;
   public bool victim;
-  public Vector2 position;
+  public Vector3 position;
+  public string state;
 }

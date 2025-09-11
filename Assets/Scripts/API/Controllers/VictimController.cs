@@ -7,34 +7,42 @@ public class VictimController : MonoBehaviour
     public static GameObject fakeVictimPrefab;
     public static void HandleVictim(Victim victim)
     {
-        Vector3 position = new Vector3(victim.position.x, 0f, victim.position.z);
-        if (victim.victim)  
+        Debug.Log($"Victim info: {victim.state} {victim.position}");
+        Vector3 newPos = GridController.positionToGrid(victim.position);
+        Debug.Log($"NewPos: {newPos}");
+        if (victim.state == "alive")  
         {
-            if (victim.rescued)
-            {
-                Instantiate(rescuedPrefab, position, Quaternion.identity);
-            }
-            else if (victim.lost)
-            {
-                Instantiate(deadPrefab, position, Quaternion.identity);
-            }
-            else
-            {
-                Instantiate(alivePrefab, position, Quaternion.identity);
-            }
+            
+                Instantiate(alivePrefab, newPos, Quaternion.identity);
+                Debug.Log($"Created alive victim at {newPos}");
+            
         }
-        else
-        {
-            GameObject victimObj = Instantiate(fakeVictimPrefab, position, Quaternion.identity);
+        else if (victim.state == "fake")        {
+            GameObject victimObj = Instantiate(fakeVictimPrefab, newPos, Quaternion.identity);
+            Debug.Log($"Created fake victim at {newPos}, actual newPos after instantiation: {victimObj.transform.position}");
+        }
+        else {
+            if (victim.state =="rescued")
+            {
+                Instantiate(rescuedPrefab, newPos, Quaternion.identity);
+                Debug.Log($"Created rescued victim at {newPos}");
+            }
+            else if (victim.state == "dead")
+            {
+                Instantiate(deadPrefab, newPos, Quaternion.identity);
+                Debug.Log($"Created dead victim at {newPos}");
+            }
+
         }
     }
 }
 public class Victim
 {
-    public Position position;
-    public bool victim;   
+    public Vector3 position;
+    public bool victim; 
     public bool rescued;
-    public bool lost;
+
+    public string state;
 }
 [System.Serializable]
 public class Position

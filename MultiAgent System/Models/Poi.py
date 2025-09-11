@@ -7,6 +7,8 @@ class Poi():
         self.revealed = False
         self.lost = False
         self.victim = victim
+        self.state = lambda victim : "alive" if victim else "fake" (victim)
+
 
     def reveal(self):
         self.revealed = True
